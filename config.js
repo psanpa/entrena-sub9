@@ -4,6 +4,6 @@
 // 2) Publishable key (sb_publishable_...) o la antigua clave "anon" (eyJ...)
 // IMPORTANTE: NUNCA incluyas aquí service_role ni claves secretas.
 window.ENTRENA_CLOUD = {
-  url: 'PEGA_AQUI_TU_PROJECT_URL',
-  publishableKey: 'PEGA_AQUI_TU_PUBLISHABLE_KEY'
+  url: 'https://xeykxchdvlvocxvfiwdd.supabase.co',
+  publishableKey: 'sb_publishable_tsatfyilfU4U3uXdg-DekA_WTcZ3cbt'
 };
