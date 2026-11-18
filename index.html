@@ -2,7 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1423">
-<title>ENTRENA · Mi plan SUB9</title>
+<title>ENTRENA SUB9 v3 · Diario sincronizado</title>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#0b1423;--bg2:#101d30;--card:#14243a;--card2:#192b43;--line:#2b3b53;--ink:#eef5ff;--muted:#9cafc5;--accent:#62e3bc;--accent2:#54a7ff;--gold:#f5c66f;--bad:#ff7b84;--purple:#bcabff;--radius:18px;--shadow:0 18px 48px #0002}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 70% -10%,#193752 0,transparent 39%),var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}input,select,textarea{color:var(--ink);background:#0e1b2d;border:1px solid #354961;border-radius:11px;padding:11px 12px;outline:0;width:100%;min-width:0}input:focus,select:focus,textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 3px #54a7ff22}input[type=checkbox]{width:auto;accent-color:var(--accent)}input[type=number]{font-variant-numeric:tabular-nums}input::placeholder,textarea::placeholder{color:#758ba3}textarea{min-height:76px;resize:vertical}label{display:block;color:#b4c6dc;font-size:12px;font-weight:650;margin-bottom:6px}h1,h2,h3,h4,p{margin-top:0}h1{font-size:clamp(28px,4vw,40px);line-height:1.15;letter-spacing:-1.2px;margin-bottom:10px}h2{font-size:21px;letter-spacing:-.4px;margin:0}h3{font-size:16px;margin-bottom:12px}p{color:var(--muted)}button,.btn{background:#203650;border:1px solid #37516a;color:var(--ink);padding:10px 15px;border-radius:11px;font-weight:730;transition:background .15s,transform .15s;white-space:nowrap}button:hover{background:#2b4768}button:active{transform:scale(.985)}button.primary{background:var(--accent);border-color:var(--accent);color:#062d27}button.primary:hover{background:#8ef0d0}button.soft{background:#183a42;border-color:#2f6868;color:#9af7d6}button.danger{background:#48252d;color:#ffc0c7;border-color:#77404a}button.ghost{background:transparent}button.small{font-size:12px;padding:6px 10px;border-radius:9px}button.icononly{width:37px;height:37px;padding:6px;display:grid;place-items:center}.app{max-width:1440px;margin:0 auto;padding:0 24px 45px}.top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 0 15px}.brand{display:flex;align-items:center;gap:12px}.logo{width:45px;height:45px;border-radius:14px;background:linear-gradient(145deg,#67e5bf,#53a8ff);display:grid;place-items:center;color:#092234;font-size:22px;font-weight:1000;box-shadow:0 5px 27px #69e8c32d}.brand b{letter-spacing:1.4px;font-size:17px}.brand small{display:block;color:var(--muted);font-size:11px;letter-spacing:.25px}.topactions{display:flex;gap:8px;align-items:center}.chip{border:1px solid #33506b;color:#c6d5e7;background:#193049;padding:5px 10px;border-radius:100px;font-size:12px;white-space:nowrap}.chip.good{color:#98f5d4;background:#173d36;border-color:#326b5e}.chip.warn{color:#ffe0a7;background:#493b26;border-color:#75603b}.chip.bad{color:#ffacb2;background:#4a282e;border-color:#7e4046}.tabs{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:15px;border-bottom:1px solid var(--line);margin-bottom:25px}.tabs::-webkit-scrollbar{display:none}.navbtn{background:transparent;border:1px solid transparent;color:#a5b7cc;padding:10px 14px;white-space:nowrap}.navbtn.active{background:#21403f;border-color:#3b8d78;color:#9cf6d7}.sectionhead{display:flex;gap:12px;align-items:center;justify-content:space-between;margin:0 0 17px;flex-wrap:wrap}.sectionhead .sub{color:var(--muted);font-size:13px;margin:4px 0 0}.stack{display:grid;gap:15px}.card{background:linear-gradient(160deg,#172b42,#122238);border:1px solid #2a4059;border-radius:var(--radius);box-shadow:var(--shadow);padding:19px}.card.inset{background:#0e1d30;box-shadow:none}.hero{background:linear-gradient(120deg,#1b443d,#18304a 65%,#173c59);border:1px solid #376766;position:relative;overflow:hidden;min-height:190px;padding:27px}.hero:after{content:'↗';position:absolute;right:28px;bottom:-96px;color:#77e1c313;font-size:300px;line-height:1;font-weight:900;pointer-events:none}.hero h1{max-width:690px}.hero p{max-width:640px;color:#c9dfdb}.heroactions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:2.4px;color:#79eac9;font-weight:800;margin-bottom:9px}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.stat .k-label{font-size:12px;color:#acc0d5}.stat .k-value{font-size:29px;font-weight:850;letter-spacing:-.7px;margin:7px 0 4px}.stat .k-foot{color:#a2b9cf;font-size:11px}.two{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(290px,1fr);gap:15px}.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.listrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #2c4055}.listrow:last-child{border-bottom:0}.meta{font-size:12px;color:var(--muted)}.muted{color:var(--muted)}.tiny{font-size:11px}.emptystate{text-align:center;padding:32px 12px;color:var(--muted)}.big-icon{font-size:35px;display:block;margin-bottom:10px}.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;border-radius:7px;padding:4px 7px;font-weight:720;background:#2a3d56;color:#d4e5f8}.pill.gym{background:#433153;color:#e1bcff}.pill.run{background:#203f43;color:#91ebce}.pill.swim{background:#193f61;color:#9ad5ff}.pill.test{background:#514027;color:#ffe0a3}.pill.other{background:#3a4353;color:#d1d8e8}.pill.done{background:#174c3b;color:#89efbe}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.space{justify-content:space-between}.grow{flex:1}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.help{font-size:12px;color:#8faac3;margin-top:5px}.inline-note{background:#1f3441;border:1px solid #395b62;border-radius:11px;padding:11px 13px;color:#add9d6;font-size:12px}.borderline{border-top:1px solid #30445c;margin:15px 0}.progress{background:#24364b;height:9px;border-radius:30px;overflow:hidden}.progress i{display:block;background:linear-gradient(90deg,#52a6ff,#69e9b6);height:100%;border-radius:30px}.dayhint{font-size:12px;color:#a5b9cd}.mesolist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.mesocard{position:relative;overflow:hidden}.mesocard:before{content:'';position:absolute;left:0;top:0;height:100%;width:4px;background:var(--accent2)}.mesocard.selected{border-color:#58d9bc;box-shadow:0 0 0 1px #58d9bc35}.mesocard .index{font-size:12px;text-transform:uppercase;font-weight:820;letter-spacing:1px;color:#79d8cb}.mesocard h3{font-size:18px;margin:5px 0 5px}.calendarWeek{margin-bottom:20px}.weektitle{margin:15px 0 9px;font-size:13px;color:#c2d5e9;font-weight:760;display:flex;justify-content:space-between;gap:10px}.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.day{border:1px solid #2d445f;background:#15253c;border-radius:13px;padding:10px;min-height:162px;min-width:0}.day.today{border-color:#75d8bc;box-shadow:inset 0 0 0 1px #448779}.day .num{font-size:20px;font-weight:840}.day .dow{color:var(--muted);font-size:11px;text-transform:uppercase}.day .daytop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:11px}.day .dayact{display:block;text-align:left;background:#23384f;color:#cedceb;border:1px solid #3c5369;border-radius:7px;padding:6px 7px;width:100%;margin:5px 0;font-size:11px;line-height:1.2;white-space:normal}.day .dayact.done{border-color:#397d6b;background:#1c423c}.day .plus{background:transparent;border:1px dashed #4b6881;color:#95c7da;width:100%;font-size:11px;padding:7px;margin-top:7px}.weektabs{display:flex;gap:5px;flex-wrap:wrap}.weektabs button.active{background:#284c4a;border-color:#55bd9b;color:#a1f4d3}.sessionarea{display:grid;gap:10px}.sessioncard{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid #304661;background:#122237;padding:12px;border-radius:12px}.sessioncard>div{min-width:0}.sessioncard button{flex-shrink:0}.sessioncard .title{font-weight:750}.mini-table{width:100%;border-collapse:collapse}.mini-table th{text-align:left;font-size:11px;color:#96aac2;font-weight:700;padding:9px 7px;border-bottom:1px solid #30465a}.mini-table td{padding:9px 7px;border-bottom:1px solid #253b51;font-size:13px}.mini-table tr:last-child td{border-bottom:0}.table-scroll{overflow:auto}.mini-table .numcell{text-align:right;font-variant-numeric:tabular-nums}.chartwrap{height:226px;position:relative;margin-top:10px}.chartwrap svg{width:100%;height:100%}.chartaxis{fill:#91a9bf;font-size:11px}.barline{display:flex;gap:12px;align-items:center;padding:8px 0}.barline .label{min-width:116px;color:#bfcfe0;font-size:13px}.barline .track{flex:1;min-width:0;height:10px;border-radius:6px;background:#21364a;overflow:hidden}.barline .track i{height:100%;display:block;background:linear-gradient(90deg,#63a9ff,#6be6c7);border-radius:6px}.barline .amount{font-size:12px;min-width:52px;text-align:right}.sortbtns{display:flex;flex-wrap:wrap;gap:7px}.filterselect{width:auto;max-width:280px}.numaccent{color:#7af0c9;font-weight:800}.record-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.record{border:1px solid #37536a;padding:14px;border-radius:13px;background:#11263a}.record .value{font-size:23px;font-weight:860;color:#8bf2ce}.record .subject{font-weight:780}.record small{color:#99aec4}.footnote{font-size:12px;color:#9ab0c6;margin:13px 0 0}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#245e4f;color:white;padding:12px 20px;border:1px solid #67bd9f;border-radius:14px;box-shadow:0 10px 55px #0008;z-index:1000;display:none;max-width:90vw;text-align:center}.overlay{position:fixed;inset:0;background:#030912b9;z-index:50;display:none;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}.overlay.open{display:flex}.dialog{background:#14243a;border:1px solid #3c5773;border-radius:20px;box-shadow:0 25px 100px #000a;max-width:790px;width:100%;margin:auto;overflow:hidden}.dialog.wide{max-width:980px}.dialogheader{position:sticky;top:0;background:#14243a;border-bottom:1px solid #304860;z-index:2;padding:16px 19px;display:flex;justify-content:space-between;gap:14px;align-items:center}.dialogtitle{font-size:18px;font-weight:850}.dialogbody{padding:19px;max-height:calc(100vh - 195px);overflow-y:auto}.dialogfoot{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:15px 19px;border-top:1px solid #304860;background:#162840;flex-wrap:wrap}.exercise{border:1px solid #385069;border-radius:15px;padding:14px;margin:13px 0;background:#102138}.exercisehead{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}.exercise .sets{display:grid;grid-template-columns:42px repeat(4,minmax(0,1fr)) 37px;gap:6px;align-items:end}.exercise .sets .columnname{font-size:10px;line-height:1.2;color:#9db2ca;font-weight:650;margin-bottom:4px;min-height:25px}.exercise .sets input{padding:8px 5px;text-align:center;font-size:13px}.exercise .setnumber{font-size:12px;font-weight:800;color:#adc4db;align-self:center}.exercise .sethead{display:contents}.exercise .setrow{display:contents}.exercise .sets.compact{grid-template-columns:42px repeat(3,minmax(0,1fr)) 37px}.interval{display:grid;grid-template-columns:35px repeat(4,minmax(0,1fr)) 35px;gap:6px;align-items:end;margin-bottom:8px}.interval label{font-size:10px;min-height:25px}.interval input{padding:8px 6px;text-align:center}.testrow{display:grid;grid-template-columns:minmax(100px,1.4fr) 1fr 1fr;gap:8px;align-items:center;margin:9px 0}.testrow label{margin:0}.compacthelp{color:#9aaec4;font-size:12px}.settingrow{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #30445c}.settingrow:last-child{border-bottom:0}.mark{display:inline-block;border-radius:7px;background:#1b463b;padding:3px 7px;color:#93edc7;font-size:11px;font-weight:800}.hide{display:none!important}
@@ -12,16 +14,25 @@
 </head>
 <body>
 <div class="app">
- <header class="top"><div class="brand"><div class="logo">↗</div><div><b>ENTRENA<span style="color:var(--accent)">SUB9</span></b><small>Diario · Mesociclos · Marcas</small></div></div><div class="topactions"><span class="chip good">● Sin conexión · Guardado local</span><button class="primary" id="quickNew">＋ Sesión</button></div></header>
+ <header class="top"><div class="brand"><div class="logo">↗</div><div><b>ENTRENA<span style="color:var(--accent)">SUB9</span></b><small>Diario · Mesociclos · Marcas</small></div></div><div class="topactions"><button id="syncState" class="chip warn" data-action="go-cloud" title="Estado de sincronización">● Local · sin conectar</button><button class="primary" id="quickNew">＋ Sesión</button></div></header>
  <nav class="tabs" id="nav">
-  <button data-tab="panel" class="navbtn active">◈ Panel</button><button data-tab="calendario" class="navbtn">▦ Calendario</button><button data-tab="mesociclos" class="navbtn">▣ Mesociclos</button><button data-tab="historial" class="navbtn">◷ Historial</button><button data-tab="polar" class="navbtn">♥ Polar</button><button data-tab="estadisticas" class="navbtn">▥ Estadísticas</button><button data-tab="datos" class="navbtn">⚙ Datos</button>
+  <button data-tab="panel" class="navbtn active">◈ Panel</button><button data-tab="calendario" class="navbtn">▦ Calendario</button><button data-tab="mesociclos" class="navbtn">▣ Mesociclos</button><button data-tab="historial" class="navbtn">◷ Historial</button><button data-tab="polar" class="navbtn">♥ Polar</button><button data-tab="composicion" class="navbtn">⚖ Báscula</button><button data-tab="nube" class="navbtn">☁ Nube</button><button data-tab="estadisticas" class="navbtn">▥ Estadísticas</button><button data-tab="datos" class="navbtn">⚙ Datos</button>
  </nav>
  <main id="main"></main>
 </div>
 <div class="overlay" id="modal" aria-modal="true" role="dialog"><div class="dialog" id="modalContent"></div></div><div class="toast" id="toast" role="status"></div>
 <script>
 'use strict';
-const KEY='ENTRENA_SUB9_v1_local';
+const LEGACY_KEY='ENTRENA_SUB9_v1_local';
+const KEY='ENTRENA_SUB9_v3_local';
+const QUEUE_KEY='ENTRENA_SUB9_v3_pending';
+const BASE_KEY='ENTRENA_SUB9_v3_cloud_base';
+const CONFLICT_KEY='ENTRENA_SUB9_v3_conflicts';
+const LAST_ACCOUNT='ENTRENA_SUB9_v3_account';
+const V2_COPY='ENTRENA_SUB9_v3_legacy_backup';
+const readJson=(k,fallback)=>{try{let raw=localStorage.getItem(k);return raw?JSON.parse(raw):fallback}catch{return fallback}};
+// Conserva una copia local de la v2 para facilitar la migración.
+if(!localStorage.getItem(KEY)&&localStorage.getItem(LEGACY_KEY)&&!localStorage.getItem(V2_COPY)){try{localStorage.setItem(V2_COPY,localStorage.getItem(LEGACY_KEY))}catch{}}
 const $=(id)=>document.getElementById(id);
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const today=()=>{let d=new Date();return dateKey(d)};
@@ -65,7 +76,7 @@ function newWorkout(date,type='gym',mesoId=null){
 }
 function initialDB(){
  let mesocycles=Array.from({length:8},(_,i)=>({id:id(),title:`M${i+1} · ${phaseBrief[i]}`,start:addDays('2026-11-16',28*i),end:addDays('2026-11-16',28*i+27),phase:getPhase(i),description:phaseDesc[i]}));
- const db={version:2,mesocycles,workouts:[],polar:[],settings:{goal2k:'9:00',targetDate:'2027-06-30',reference:{run2k:'9:33',pushups:23,plank:'1:13',agility:'14',swim50:''}},createdAt:new Date().toISOString()};
+ const db={version:3,mesocycles,workouts:[],polar:[],body:[],settings:{goal2k:'9:00',targetDate:'2027-06-30',reference:{run2k:'9:33',pushups:23,plank:'1:13',agility:'14',swim50:''}},createdAt:new Date().toISOString()};
  const plans=[['Carrera Z2 · readaptación',null,null],['6 × 400 m · velocidad',400,'1:50'],['5 × 500 m · desarrollo',500,'2:15'],['4 × 600 m · específico',600,'2:39'],['4 × 800 m · resistencia',800,'3:35'],['3 × 1000 m · ritmo objetivo',1000,'4:35'],['6 × 400 m · afinamiento',400,'1:47'],['Test 2 km / simulación',null,null]];
  const nrep=[0,6,5,4,4,3,6,0];
  mesocycles.forEach((m,mi)=>{
@@ -85,10 +96,10 @@ function initialDB(){
  });
  return db;
 }
-function loadDB(){try{let raw=localStorage.getItem(KEY);if(raw){let x=JSON.parse(raw);if(Array.isArray(x.workouts)&&Array.isArray(x.mesocycles)){if(!Array.isArray(x.polar))x.polar=[];return x;}}}catch(e){console.warn(e)}return initialDB()}
-let db=loadDB();let tab='panel';let selectedMeso=db.mesocycles.find(m=>m.start<=today()&&m.end>=today())?.id||db.mesocycles[0]?.id;let selectedWeek=0;let draft=null;let editingMeso=null;let historyFilter='all';let statExercise='Press banca';let weeklyView=true;let editingPolar=null;let polarRange='30';let polarMetric='effort-tolerance';
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));return true;}catch(e){toast('Sin espacio para guardar. Exporta copia de seguridad.',true);return false}}
-persist();
+function loadDB(){try{let raw=localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY);if(raw){let x=JSON.parse(raw);if(Array.isArray(x.workouts)&&Array.isArray(x.mesocycles)){if(!Array.isArray(x.polar))x.polar=[];if(!Array.isArray(x.body))x.body=[];x.version=3;return x;}}}catch(e){console.warn(e)}return initialDB()}
+let db=loadDB();let tab='panel';let selectedMeso=db.mesocycles.find(m=>m.start<=today()&&m.end>=today())?.id||db.mesocycles[0]?.id;let selectedWeek=0;let draft=null;let editingMeso=null;let historyFilter='all';let statExercise='Press banca';let weeklyView=true;let editingPolar=null;let polarRange='30';let polarMetric='effort-tolerance';let editingBody=null;let bodyRange='90';let bodyMetric='weight';
+function persist(){try{db.version=3;syncTrackChanges();localStorage.setItem(KEY,JSON.stringify(db));scheduleSync();return true;}catch(e){toast('Sin espacio para guardar. Exporta copia de seguridad.',true);return false}}
+try{localStorage.setItem(KEY,JSON.stringify(db))}catch{}
 function mesoByDate(date){return db.mesocycles.find(m=>m.start<=date&&m.end>=date)}
 const getMeso=()=>db.mesocycles.find(m=>m.id===selectedMeso)||db.mesocycles[0];
 const workoutsByMeso=(m)=>db.workouts.filter(w=>w.mesoId===m?.id&&w.date>=m.start&&w.date<=m.end);
@@ -137,6 +148,8 @@ function render(){
  if(tab==='historial')main.innerHTML=renderHistory();
  if(tab==='estadisticas')main.innerHTML=renderStats();
  if(tab==='polar')main.innerHTML=renderPolar();
+ if(tab==='composicion')main.innerHTML=renderBody();
+ if(tab==='nube')main.innerHTML=renderCloud();
  if(tab==='datos')main.innerHTML=renderData();
 }
 function renderPanel(){const m=getMeso(),c=calc(),all=m?workoutsByMeso(m):[],done=all.filter(w=>w.done).length;
@@ -269,7 +282,7 @@ function savePolar(){if(!editingPolar)return;let p=editingPolar;const dateOk=/^\
  db.polar??=[];let idx=db.polar.findIndex(x=>x.id===p.id);if(idx>=0)db.polar[idx]=clone(p);else db.polar.push(clone(p));if(!persist())return;closeModal();render();toast('Lectura Polar guardada. La gráfica ya está actualizada.');
 }
 
-function renderData(){return `${drawHead('Tus datos y seguridad','El archivo funciona sin cuenta y sin Internet. Las lecturas Polar se introducen manualmente, sin sincronización con tu reloj.')}<div class="two"><div class="card"><h2>Copias de seguridad</h2><p style="margin-top:9px">Los entrenamientos se guardan automáticamente en el almacenamiento local de <b>este navegador y este dispositivo</b>. No se sincronizan entre el móvil y el ordenador.</p><div class="row" style="margin:12px 0"><button class="primary" data-action="export-json">↓ Exportar copia JSON</button><button data-action="import-json">↑ Importar copia JSON</button></div><div class="row"><button data-action="export-csv">↓ Descargar resumen CSV</button><button data-action="export-sets-csv">↓ Descargar series CSV</button><button data-action="export-polar-csv">↓ Descargar Polar CSV</button></div><input id="jsonImport" type="file" accept="application/json,.json" class="hide"><div class="inline-note" style="margin-top:16px">Recomendación: exporta una copia JSON cada semana. Si borras los datos del navegador, pierdes el historial local. La importación reemplaza el contenido existente previa confirmación.</div></div>
+function renderData(){return `${drawHead('Tus datos y seguridad','Respaldo local, exportaciones y sincronización opcional mediante Supabase. Las lecturas Polar se introducen manualmente.')}<div class="two"><div class="card"><h2>Copias de seguridad</h2><p style="margin-top:9px">Los datos se guardan <b>en este navegador</b>. Si conectas una cuenta en ☁ Nube, también se sincronizan entre móvil y ordenador. Hasta que aparezca «Sincronizado», conserva la copia local.</p><div class="row" style="margin:12px 0"><button class="primary" data-action="export-json">↓ Exportar copia JSON</button><button data-action="import-json">↑ Importar copia JSON</button></div><div class="row"><button data-action="export-csv">↓ Descargar resumen CSV</button><button data-action="export-sets-csv">↓ Descargar series CSV</button><button data-action="export-polar-csv">↓ Descargar Polar CSV</button></div><input id="jsonImport" type="file" accept="application/json,.json" class="hide"><div class="inline-note" style="margin-top:16px">Recomendación: exporta una copia JSON cada semana. Si borras los datos del navegador, pierdes el historial local. La importación reemplaza el contenido existente previa confirmación.</div></div>
  <div class="card"><h2>Objetivos personales</h2><div class="grid2" style="margin:14px 0"><div><label>Objetivo 2 km</label><input id="target2k" value="${esc(db.settings?.goal2k||'9:00')}" placeholder="9:00"></div><div><label>Fecha objetivo</label><input id="targetDate" type="date" value="${esc(db.settings?.targetDate||'2027-06-30')}"></div></div><button class="primary small" data-action="save-settings">Guardar objetivos</button><div class="borderline"></div><p class="help">En el panel aparecen las referencias históricas aproximadas que ya conocíamos. Para que entren en las estadísticas como marcas reales, regístralas con su fecha en una sesión de tipo «Pruebas físicas».</p><div class="grid2"><div><label>Test 2 km (referencia)</label><input id="ref2k" value="${esc(db.settings?.reference?.run2k||'')}"></div><div><label>Flexiones (referencia)</label><input id="refPush" type="number" value="${esc(db.settings?.reference?.pushups??'')}"></div><div><label>Plancha (referencia)</label><input id="refPlank" value="${esc(db.settings?.reference?.plank||'')}"></div><div><label>Agilidad (referencia)</label><input id="refAgility" value="${esc(db.settings?.reference?.agility||'')}"></div></div><button class="small" style="margin-top:12px" data-action="save-reference">Actualizar referencias</button></div></div>
  <div class="card" style="margin-top:14px"><div class="sectionhead"><div><h2>Catálogo y mantenimiento</h2><div class="sub">${db.mesocycles.length} mesociclos · ${db.workouts.length} sesiones previstas / registradas</div></div></div><div class="row"><button data-action="new-meso">＋ Añadir mesociclo</button><button class="danger" data-action="reset-all">Restablecer plantilla inicial</button></div><p class="help">Restablecer borra todos tus datos del navegador después de pedir confirmación. Exporta tu copia antes.</p></div>`;
 }
@@ -327,7 +340,7 @@ function renderSwim(){const c=draft.cardio||{},pool=nz(draft.poolLength)||25,dri
 }
 function renderTest(){return `<div class="inline-note">Guarda los resultados de tus pruebas de acceso. En agilidad escribe segundos (por ejemplo <b>14,6</b>); para 2 km, plancha y 50 m usa formato <b>mm:ss</b>.</div><div class="grid2" style="margin-top:14px">${field('2 km (mm:ss)','tests.run2k',draft.tests?.run2k,'text','placeholder="9:33"')}${field('Flexiones (repeticiones)','tests.pushups',draft.tests?.pushups,'number','min="0" step="1"')}${field('Plancha frontal (mm:ss)','tests.plank',draft.tests?.plank,'text','placeholder="1:13"')}${field('Circuito agilidad (segundos)','tests.agility',draft.tests?.agility,'text','placeholder="14,0"')}${field('Natación 50 m (mm:ss)','tests.swim50',draft.tests?.swim50,'text','placeholder="0:58"')}</div>`;}
 function openModal(body,mode='workout',wide=true){modalMode=mode;const c=$('modalContent');c.className='dialog'+(wide?' wide':'');c.innerHTML=body;$('modal').classList.add('open');document.body.style.overflow='hidden';}
-function closeModal(){modalMode=null;draft=null;editingMeso=null;editingPolar=null;$('modal').classList.remove('open');$('modalContent').innerHTML='';document.body.style.overflow='';}
+function closeModal(){modalMode=null;draft=null;editingMeso=null;editingPolar=null;editingBody=null;$('modal').classList.remove('open');$('modalContent').innerHTML='';document.body.style.overflow='';}
 function openWorkout(workoutId){let w=db.workouts.find(x=>x.id===workoutId);if(!w)return toast('No se ha encontrado la sesión.',true);draft=clone(w);renderWorkoutModal();}
 function newOnDate(date=today(),type='gym'){draft=newWorkout(date,type,mesoByDate(date)?.id||null);renderWorkoutModal();}
 function renderWorkoutModal(){
@@ -344,12 +357,12 @@ function renderWorkoutModal(){
 function setNested(obj,path,value){let parts=path.split('.'),p=obj;for(let i=0;i<parts.length-1;i++){if(p[parts[i]]==null)p[parts[i]]={};p=p[parts[i]];}p[parts.at(-1)]=value;}
 function handleFormChange(el){
  if(!el.dataset.path)return;
- if(modalMode==='workout'&&!draft||modalMode==='meso'&&!editingMeso||modalMode==='polar'&&!editingPolar)return;
+ if(modalMode==='workout'&&!draft||modalMode==='meso'&&!editingMeso||modalMode==='polar'&&!editingPolar||modalMode==='body'&&!editingBody)return;
  let path=el.dataset.path;let value=el.type==='checkbox'?el.checked:el.type==='number'?num(el.value):el.value;
  if(modalMode==='workout'){
   if(path==='type'&&value!==draft.type){let keep={date:draft.date,note:draft.note,wellbeing:draft.wellbeing};let updated=newWorkout(draft.date,value,mesoByDate(draft.date)?.id||null);updated.id=draft.id;updated.date=keep.date;updated.wellbeing=keep.wellbeing;updated.note=keep.note;updated.done=draft.done;draft=updated;renderWorkoutModal();return;}
   setNested(draft,path,value);
- }else if(modalMode==='meso'){setNested(editingMeso,path,value)}else if(modalMode==='polar'){setNested(editingPolar,path,value)}
+ }else if(modalMode==='meso'){setNested(editingMeso,path,value)}else if(modalMode==='polar'){setNested(editingPolar,path,value)}else if(modalMode==='body'){setNested(editingBody,path,value)}
 }
 function ensureValid(w){if(!/^\d{4}-\d{2}-\d{2}$/.test(w.date)||!Number.isFinite(asDate(w.date).getTime()))return 'Fecha no válida';
  if(w.type==='gym'){for(const e of w.exercises||[]){if(!e.name?.trim())return 'Cada ejercicio de gimnasio necesita nombre.';for(const s of e.sets||[])for(const k of ['plannedKg','plannedReps','actualKg','actualReps','rir'])if(s[k]!=null&&s[k]<0)return 'No se permiten pesos o repeticiones negativos.';}}
@@ -399,8 +412,138 @@ function exportSetsCsv(){let r=[['Fecha','Actividad','Sesión','Ejercicio','Seri
  if(w.type==='swim')(w.drills||[]).forEach((d,i)=>r.push([w.date,'Piscina',w.title,d.name,i+1,'','','','','',d.distancePlan,d.distanceActual,d.time]));
  if(w.type==='run')(w.intervals||[]).forEach((s,i)=>r.push([w.date,'Carrera',w.title,'Serie',i+1,'','','','','',s.distance,s.distance,s.actualTime]));});saveBlob('EntrenaSUB9_series_y_piscina.csv','text/csv;charset=utf-8',csv(r));}
 function exportPolarCsv(){const headers=['Fecha','Carga','Esfuerzo','Tolerancia','Relación E/T','FC nocturna mínima','VFC HRV ms','Horas sueño','Puntuación sueño','Peso kg','Estado','Z1 min','Z2 min','Z3 min','Z4 min','Z5 min','Z6 min','Observaciones'];let rows=[headers];(db.polar||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>rows.push([p.date,p.load,p.effort,p.tolerance,polarRatio(p)??'',p.nightHr,p.hrv,p.sleepHours,p.sleepScore,p.bodyWeight,p.status,...['Z1','Z2','Z3','Z4','Z5','Z6'].map(z=>p.zoneMins?.[z]),p.notes]));saveBlob('EntrenaSUB9_Polar_'+today()+'.csv','text/csv;charset=utf-8',csv(rows));}
-async function importJson(file){if(!file)return;try{let x=JSON.parse(await file.text());if(!Array.isArray(x.mesocycles)||!Array.isArray(x.workouts)||x.mesocycles.length>100||x.workouts.length>20000)throw new Error('Estructura o tamaño no válido');if(!x.mesocycles.every(m=>typeof m.id==='string'&&typeof m.start==='string'&&typeof m.end==='string')||!x.workouts.every(w=>typeof w.date==='string'&&['gym','run','swim','other','test'].includes(w.type)))throw new Error('Estructura de datos incompleta');if(!confirm('¿Sustituir toda la información actual con la copia seleccionada? Es recomendable exportar antes una copia JSON.'))return;
- db={version:2,settings:x.settings||{},mesocycles:x.mesocycles,workouts:x.workouts,polar:Array.isArray(x.polar)?x.polar:[],createdAt:x.createdAt||new Date().toISOString()};selectedMeso=db.mesocycles[0]?.id;selectedWeek=0;persist();closeModal();setTab('panel');toast('Copia restaurada.');}catch(e){toast('No se pudo importar: '+e.message,true)}}
+async function importJson(file){if(!file)return;try{let x=JSON.parse(await file.text());if(!Array.isArray(x.mesocycles)||!Array.isArray(x.workouts)||x.mesocycles.length>100||x.workouts.length>20000)throw new Error('Estructura o tamaño no válido');if(!x.mesocycles.every(m=>typeof m.id==='string'&&typeof m.start==='string'&&typeof m.end==='string')||!x.workouts.every(w=>typeof w.date==='string'&&['gym','run','swim','other','test'].includes(w.type)))throw new Error('Estructura de datos incompleta');if(!confirm('¿Sustituir toda la información actual con la copia seleccionada? SI ESTÁS CONECTADO A LA NUBE, estas sustituciones y eliminaciones se sincronizarán en otros dispositivos. Exporta primero una copia JSON.'))return;
+ db={version:3,settings:x.settings||{},mesocycles:x.mesocycles,workouts:x.workouts,polar:Array.isArray(x.polar)?x.polar:[],body:Array.isArray(x.body)?x.body:[],createdAt:x.createdAt||new Date().toISOString()};selectedMeso=db.mesocycles[0]?.id;selectedWeek=0;persist();closeModal();setTab('panel');toast('Copia restaurada.');}catch(e){toast('No se pudo importar: '+e.message,true)}}
+
+/* ===== BÁSCULA: HISTORIAL Y COMPOSICIÓN CORPORAL ===== */
+function newBodyRecord(date=today()){return {id:id(),date,weight:null,fat:null,muscle:null,muscleUnit:'%',water:null,bone:null,boneUnit:'kg',notes:''};}
+function bodyList(){return (db.body||[]).filter(b=>b&&/^\d{4}-\d{2}-\d{2}$/.test(b.date)).slice().sort((a,b)=>a.date.localeCompare(b.date));}
+const BODY_METRICS={weight:{name:'Peso corporal',unit:'kg',key:'weight',color:'#76e7bd'},fat:{name:'Grasa corporal',unit:'%',key:'fat',color:'#ffa77b'},musclePct:{name:'Músculo',unit:'%',key:'muscle',unitField:'muscleUnit',color:'#7fc0ff'},muscleKg:{name:'Músculo',unit:'kg',key:'muscle',unitField:'muscleUnit',color:'#7fc0ff'},water:{name:'Agua corporal',unit:'%',key:'water',color:'#95dfff'},boneKg:{name:'Masa ósea',unit:'kg',key:'bone',unitField:'boneUnit',color:'#e8c185'},bonePct:{name:'Masa ósea',unit:'%',key:'bone',unitField:'boneUnit',color:'#e8c185'}};
+function bodyMetricUnit(k){return k.endsWith('Kg')?'kg':'%';}
+function bodySeries(rows,key){let m=BODY_METRICS[key];return rows.map(x=>({date:x.date,y:num(x[m.key]),unit:x[m.unitField]})).filter(x=>x.y!==null&&(!m.unitField||x.unit===bodyMetricUnit(key)));}
+function renderBody(){const all=bodyList(),recent=all.filter(x=>bodyRange==='all'||x.date>=addDays(today(),1-Number(bodyRange))),last=all.at(-1);
+ let m=BODY_METRICS[bodyMetric]||BODY_METRICS.weight,ser=bodySeries(recent,bodyMetric),first=ser[0],end=ser.at(-1),diff=first&&end&&first!==end?end.y-first.y:null;
+ const bodyCard=(name,val,unit)=>`<div class="card"><div class="meta">${name}</div><div class="body-highlight"><strong>${val==null?'—':fmtN(val,2)}</strong><span class="muted">${unit}</span></div></div>`;
+ const options=Object.entries(BODY_METRICS).map(([k,v])=>`<option value="${k}" ${bodyMetric===k?'selected':''}>${esc(v.name)} (${v.unit})</option>`).join('');
+ return `${drawHead('Báscula · Composición corporal','Evolución de tus mediciones de peso, grasa, músculo, agua y hueso.',`<button class="primary" data-action="body-new">＋ Nueva medición</button>`)}
+ <div class="metric-grid" style="margin-bottom:14px">${bodyCard('Peso',num(last?.weight),'kg')}${bodyCard('Grasa',num(last?.fat),'%')}${bodyCard('Músculo',num(last?.muscle),esc(last?.muscleUnit||'%'))}${bodyCard('Agua',num(last?.water),'%')}${bodyCard('Hueso',num(last?.bone),esc(last?.boneUnit||'kg'))}</div>
+ <div class="two"><div class="card"><h2>Gráfica de composición corporal</h2><div class="grid2" style="margin:14px 0"><div><label>Indicador</label><select id="bodyMetric">${options}</select></div><div><label>Periodo</label><select id="bodyRange"><option value="14" ${bodyRange==='14'?'selected':''}>14 días</option><option value="30" ${bodyRange==='30'?'selected':''}>30 días</option><option value="90" ${bodyRange==='90'?'selected':''}>90 días</option><option value="all" ${bodyRange==='all'?'selected':''}>Todo el historial</option></select></div></div>
+ ${polarChart([{name:m.name,color:m.color,unit:m.unit,points:ser}])}${diff!==null?`<div class="inline-note">Cambio desde ${fmtDate(first.date)} hasta ${fmtDate(end.date)}: <b>${diff>0?'+':''}${fmtN(diff,2)} ${m.unit}</b>. Los cambios no son necesariamente buenos ni malos por sí solos.</div>`:''}
+ <p class="help">Para comparar músculo y hueso sin mezclar unidades, selecciona kg o % según indique tu báscula. La masa ósea de una báscula doméstica es una estimación, no una prueba de densidad ósea.</p></div>
+ <div class="card"><h2>Últimas mediciones</h2><p class="help">Una medición por fecha. Edita la fecha si quieres corregir un registro.</p>${all.length?all.slice().reverse().slice(0,12).map(x=>`<div class="listrow"><div><b>${fmtDate(x.date)}</b><div class="meta">${num(x.weight)!=null?fmtN(x.weight,2)+' kg':''}${num(x.fat)!=null?' · grasa '+fmtN(x.fat,1)+' %':''}${num(x.bone)!=null?' · hueso '+fmtN(x.bone,2)+' '+esc(x.boneUnit||'kg'):''}</div></div><button class="small" data-action="body-edit" data-id="${esc(x.id)}">Editar</button></div>`).join(''):'<div class="emptystate">Todavía no hay mediciones de tu báscula.</div>'}<div class="row" style="margin-top:12px"><button data-action="body-new" class="soft">＋ Añadir datos</button><button data-action="body-csv">↓ Exportar CSV</button></div></div></div>
+ <div class="card" style="margin-top:14px"><h2>Historial completo de la báscula</h2><div class="table-scroll"><table class="mini-table"><thead><tr><th>Fecha</th><th>Peso kg</th><th>Grasa %</th><th>Músculo</th><th>Agua %</th><th>Hueso</th><th></th></tr></thead><tbody>${all.slice().reverse().slice(0,600).map(x=>`<tr><td>${fmtDate(x.date)}</td><td>${num(x.weight)==null?'—':fmtN(x.weight,2)}</td><td>${num(x.fat)==null?'—':fmtN(x.fat,2)}</td><td>${num(x.muscle)==null?'—':fmtN(x.muscle,2)+' '+esc(x.muscleUnit||'%')}</td><td>${num(x.water)==null?'—':fmtN(x.water,2)}</td><td>${num(x.bone)==null?'—':fmtN(x.bone,2)+' '+esc(x.boneUnit||'kg')}</td><td><button class="small" data-action="body-edit" data-id="${esc(x.id)}">✎</button></td></tr>`).join('')}</tbody></table></div><p class="footnote">Mídete preferentemente a la misma hora y en condiciones parecidas: la hidratación puede alterar los porcentajes. Los datos de Polar y de la báscula se mantienen como lecturas independientes.</p></div>`;
+}
+function newBody(){let x=db.body?.find(b=>b.date===today());if(x)return editBody(x.id);editingBody=newBodyRecord();renderBodyModal();}
+function editBody(bodyId){const x=db.body?.find(b=>b.id===bodyId);if(!x)return toast('No se ha encontrado la medición.',true);editingBody=clone(x);renderBodyModal();}
+function renderBodyModal(){const b=editingBody;if(!b)return;let exists=db.body?.some(x=>x.id===b.id);
+ openModal(`<div class="dialogheader"><div><div class="meta">Historial corporal</div><div class="dialogtitle">⚖ ${exists?'Editar':'Añadir'} medición de la báscula</div></div><button class="small icononly" data-action="close-modal">✕</button></div><div class="dialogbody"><div class="grid2">${field('Fecha','date',b.date,'date')}${field('Peso (kg)','weight',b.weight,'number','min="0" max="500" step="0.01"')}</div><div class="grid3" style="margin-top:14px">${field('Grasa corporal (%)','fat',b.fat,'number','min="0" max="100" step="0.01"')}${field('Músculo','muscle',b.muscle,'number','min="0" max="500" step="0.01"')}${selectField('Unidad músculo','muscleUnit',b.muscleUnit||'%',[['%','Porcentaje (%)'],['kg','Kilogramos (kg)']])}${field('Agua (%)','water',b.water,'number','min="0" max="100" step="0.01"')}${field('Hueso / masa ósea','bone',b.bone,'number','min="0" max="500" step="0.01"')}${selectField('Unidad hueso','boneUnit',b.boneUnit||'kg',[['kg','Kilogramos (kg)'],['%','Porcentaje (%)']])}</div>${area('Notas (hora, ayunas, modelo de báscula…)','notes',b.notes,3)}<p class="help">Introduce solo lo que la báscula muestra. Deja en blanco medidas que no tengas y usa su unidad real.</p></div><div class="dialogfoot"><div class="row">${exists?'<button class="danger small" data-action="body-delete">Eliminar</button>':''}<button class="small" data-action="close-modal">Cancelar</button></div><button class="primary" data-action="body-save">✓ Guardar medición</button></div>`,'body',true);
+}
+function saveBody(){if(!editingBody)return;let b=editingBody;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(b.date)||!Number.isFinite(asDate(b.date).getTime()))return toast('Introduce una fecha válida.',true);
+ for(let k of ['weight','fat','muscle','water','bone']){let v=num(b[k]);if(v!==null&&(v<0||v>500||(['fat','water'].includes(k)||k==='muscle'&&b.muscleUnit==='%'||k==='bone'&&b.boneUnit==='%')&&v>100))return toast('Comprueba la medición de '+k,true);}
+ if(db.body?.some(x=>x.date===b.date&&x.id!==b.id))return toast('Ya existe una lectura en esa fecha. Edítala.',true);
+ db.body??=[];let idx=db.body.findIndex(x=>x.id===b.id);if(idx>=0)db.body[idx]=clone(b);else db.body.push(clone(b));if(!persist())return;closeModal();render();toast('Medición corporal guardada.');
+}
+function deleteBody(){if(!editingBody||!confirm('¿Eliminar esta medición de la báscula?'))return;db.body=db.body.filter(x=>x.id!==editingBody.id);if(!persist())return;closeModal();render();toast('Medición eliminada.');}
+function exportBodyCsv(){let rows=[['Fecha','Peso kg','Grasa %','Músculo','Unidad músculo','Agua %','Hueso','Unidad hueso','Notas']];bodyList().forEach(x=>rows.push([x.date,x.weight,x.fat,x.muscle,x.muscleUnit,x.water,x.bone,x.boneUnit,x.notes]));saveBlob('EntrenaSUB9_Bascula_'+today()+'.csv','text/csv;charset=utf-8',csv(rows));}
+
+/* ===== NUBE: REGISTROS INDIVIDUALES, CONFLICTOS Y COLA SIN CONEXIÓN ===== */
+const KINDS=['mesocycles','workouts','polar','body'];
+const skey=(kind,itemId)=>kind+'::'+itemId;
+function snapshotOf(data){let o={};for(let kind of KINDS){for(let x of (data[kind]||[])){if(x?.id)o[skey(kind,x.id)]=clone(x)}}o[skey('settings','main')]=clone(data.settings||{});return o;}
+const sync={client:null,user:null,busy:false,ready:false,queue:readJson(QUEUE_KEY,{}),base:readJson(BASE_KEY,{}),conflicts:readJson(CONFLICT_KEY,{}),account:localStorage.getItem(LAST_ACCOUNT)||'',lastOk:null,error:'',status:'local',timer:null};
+let syncShadow=snapshotOf(db);
+function saveSyncMeta(){try{localStorage.setItem(QUEUE_KEY,JSON.stringify(sync.queue));localStorage.setItem(BASE_KEY,JSON.stringify(sync.base));localStorage.setItem(CONFLICT_KEY,JSON.stringify(sync.conflicts));}catch(e){console.error('No se puede conservar la cola de sincronización',e);toast('Fallo en almacenamiento local: exporta tus datos',true);}}
+function syncTrackChanges(){let after=snapshotOf(db);let keys=new Set([...Object.keys(syncShadow),...Object.keys(after)]);
+ for(let k of keys){let before=syncShadow[k],next=after[k];if(JSON.stringify(before)===JSON.stringify(next))continue;
+  let split=k.indexOf('::'),kind=k.slice(0,split),itemId=k.slice(split+2),previous=sync.queue[k];
+  sync.queue[k]={kind,itemId,payload:next??{},deleted:next===undefined,baseRevision:previous?.baseRevision??sync.base[k]?.updated_at??null,force:previous?.force||false,at:new Date().toISOString()};
+  // Una edición explícita de un conflicto vuelve a dejarlo pendiente de resolución.
+  if(sync.conflicts[k])sync.conflicts[k].local=clone(sync.queue[k]);
+ }
+ syncShadow=after;saveSyncMeta();updateSyncBadge();
+}
+function updateSyncBadge(){let b=$('syncState');if(!b)return;let count=Object.keys(sync.queue).length,conflicts=Object.keys(sync.conflicts).length;
+ let text=sync.status==='busy'?'↻ Sincronizando…':!sync.user?'● Solo local':conflicts?'⚠ '+conflicts+' conflicto(s)':count?'◷ '+count+' pendiente(s)':sync.status==='error'?'⚠ Error de nube':'✓ Sincronizado';
+ b.textContent=text;b.className='chip '+(sync.user&&sync.status!=='error'&&!count&&!conflicts?'good':conflicts||sync.status==='error'?'bad':'warn');
+}
+function scheduleSync(){updateSyncBadge();if(!sync.user||!navigator.onLine)return;clearTimeout(sync.timer);sync.timer=setTimeout(()=>syncNow(),850);}
+function cloudConfigured(){let c=window.ENTRENA_CLOUD||{};return typeof c.url==='string'&&/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(c.url.trim())&&typeof c.publishableKey==='string'&&c.publishableKey.length>30&&!c.publishableKey.includes('PEGA_');}
+function cloudStatusText(){if(!cloudConfigured())return 'Falta configurar config.js (URL y clave publicable de Supabase).';if(!sync.client)return 'No se pudo cargar el cliente de Supabase; revisa tu conexión y la consola.';if(!sync.user)return 'No has iniciado sesión. Los datos solo se guardan en este navegador.';if(Object.keys(sync.conflicts).length)return 'Hay cambios simultáneos en los mismos registros. Resuelve los conflictos antes de dar la sincronización por terminada.';if(sync.status==='error')return sync.error||'No se pudo conectar.';if(Object.keys(sync.queue).length)return 'Hay cambios locales pendientes de subir. Se reintenta al recuperar Internet.';return 'Tus registros están sincronizados. Puedes abrir la misma cuenta en otro dispositivo.';}
+function renderCloud(){let logged=!!sync.user,pending=Object.keys(sync.queue).length,conflicts=Object.keys(sync.conflicts),ready=cloudConfigured()&&sync.client;
+ const cfg=`<div class="card"><h2>1 · Configura Supabase</h2><p class="help">Crea un proyecto Supabase, ejecuta el SQL incluido y edita config.js. En GitHub publica solamente la URL y la clave <b>publicable/anon</b>. Nunca uses la clave service_role/secret.</p><div class="cloudstatus ${ready?'ok':'warn'}">${ready?'✓ Configuración reconocida':'⚠ '+cloudStatusText()}</div><p class="statusnote">En Supabase, activa Email en Authentication → Providers y revisa que la URL de tu GitHub Pages esté autorizada si vas a usar confirmación por email.</p></div>`;
+ const sign=logged?`<div class="card"><h2>2 · Tu cuenta</h2><div class="cloudstatus ok">Conectado: <b>${esc(sync.user.email||sync.user.id)}</b></div><div class="row"><button class="primary" data-action="cloud-sync">↻ Sincronizar ahora</button><button data-action="cloud-logout">Cerrar sesión</button><button class="danger" data-action="cloud-logout-clear">Cerrar sesión y borrar caché local</button></div><p class="help">Para que móvil y ordenador compartan entrenamientos, inicia sesión con <b>el mismo correo y contraseña</b> en ambos. El cierre de sesión normal conserva datos en este navegador.</p></div>`
+ :`<div class="card"><h2>2 · Crear cuenta o entrar</h2><div class="grid2"><div><label>Correo electrónico</label><input id="cloudEmail" type="email" autocomplete="username" placeholder="tu-correo@ejemplo.es"></div><div><label>Contraseña</label><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="8 caracteres como mínimo"></div></div><div class="row" style="margin-top:12px"><button class="primary" data-action="cloud-login" ${!ready?'disabled':''}>Entrar</button><button data-action="cloud-signup" ${!ready?'disabled':''}>Crear cuenta</button></div><p class="help">Si al registrarte Supabase exige confirmar el correo, sigue el enlace recibido antes de entrar. No escribas aquí ninguna contraseña de GitHub.</p></div>`;
+ const conflictRows=conflicts.length?`<div class="card"><h2>Conflictos pendientes (${conflicts.length})</h2><p class="help">Se modificó el mismo elemento en dos dispositivos. Tu versión local sigue conservada; decide cuál debe quedar en la nube.</p>${conflicts.map(k=>{let x=sync.conflicts[k];return `<div class="listrow"><div><b>${esc(x.kind)} · ${esc(x.itemId.slice(0,20))}</b><div class="meta">Local y nube tienen cambios distintos</div></div><div class="row"><button class="small soft" data-action="conflict-local" data-id="${esc(k)}">Conservar mi versión</button><button class="small" data-action="conflict-remote" data-id="${esc(k)}">Usar versión nube</button></div></div>`}).join('')}</div>`:'';
+ return `${drawHead('Nube · Móvil y ordenador','Sincronización privada de cada mesociclo, sesión, lectura Polar y medición de la báscula.',`<button data-action="cloud-sync" class="primary" ${!logged?'disabled':''}>↻ Sincronizar</button>`)}
+ <div class="cloudstatus ${sync.status==='error'||conflicts.length?'bad':logged&&!pending?'ok':'warn'}">${esc(cloudStatusText())}</div><div class="kpis" style="margin-bottom:15px"><div class="card stat"><div class="k-label">Cuenta</div><div class="k-value" style="font-size:19px">${logged?'Conectada':'Local'}</div></div><div class="card stat"><div class="k-label">Cambios pendientes</div><div class="k-value">${pending}</div></div><div class="card stat"><div class="k-label">Conflictos</div><div class="k-value">${conflicts.length}</div></div><div class="card stat"><div class="k-label">Última sincronización</div><div class="k-value" style="font-size:17px">${sync.lastOk?new Date(sync.lastOk).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}):'—'}</div></div></div>
+ <div class="two">${cfg}${sign}</div>${conflictRows}
+ <div class="card" style="margin-top:14px"><h2>3 · Antes de cambiar de dispositivo</h2><p class="help">Guarda un entrenamiento desde el móvil, comprueba que arriba aparece ✓ Sincronizado, y abre la misma dirección de GitHub Pages desde el ordenador. Entra con la misma cuenta si hace falta. La aplicación actualiza en segundo plano al recuperar foco y periódicamente mientras está abierta.</p><div class="row"><button data-action="cloud-sync" ${!logged?'disabled':''}>Revisar cambios de otros dispositivos</button><button data-tab="datos">Copias JSON</button></div><div class="inline-note" style="margin-top:12px">Si estás sin Internet, los cambios se guardan en la cola local y se intentan enviar después. No borres la caché, no cambies de navegador ni desinstales la aplicación mientras haya pendientes.</div></div>
+ ${localStorage.getItem(V2_COPY)?`<div class="card" style="margin-top:14px"><h2>Datos guardados de la versión 2</h2><p class="help">Se ha encontrado una copia de la v2 en este navegador. Puedes guardarla aparte o incorporarla a la cuenta en la nube. Si hay sesiones coincidentes, se respetan los registros actuales excepto si la antigua sesión está realizada.</p><div class="row"><button data-action="legacy-export">↓ Descargar copia v2</button><button class="soft" data-action="legacy-merge">Fusionar v2 con la actual</button></div></div>`:''}`;
+}
+async function initCloud(){updateSyncBadge();if(!cloudConfigured()){sync.status='local';return;}if(!window.supabase?.createClient){sync.status='error';sync.error='No se ha cargado la biblioteca de Supabase. Comprueba la conexión.';updateSyncBadge();return;}
+ try{let cfg=window.ENTRENA_CLOUD;sync.client=window.supabase.createClient(cfg.url.trim(),cfg.publishableKey.trim(),{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  sync.client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){sync.user=null;sync.status='local';updateSyncBadge();if(tab==='nube')render();}else if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED')&&session?.user){sync.user=session.user;updateSyncBadge();if(event==='SIGNED_IN')setTimeout(()=>syncNow(),200);}});
+  let saved=await sync.client.auth.getSession?.();if(saved?.data?.session?.user)sync.user=saved.data.session.user;
+  let {data,error}=await sync.client.auth.getUser();if(!error&&data?.user)sync.user=data.user;
+  if(sync.user)await syncNow();else updateSyncBadge();
+  window.addEventListener('online',async()=>{if(!sync.user){let r=await sync.client.auth.getUser();if(r.data?.user)sync.user=r.data.user;}if(sync.user)syncNow();});
+  window.addEventListener('focus',()=>{if(sync.user&&Date.now()-(Date.parse(sync.lastOk||0)||0)>10000)syncNow();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&sync.user)syncNow()});
+  setInterval(()=>{if(!document.hidden&&sync.user&&navigator.onLine)syncNow()},30000);
+ }catch(e){sync.status='error';sync.error=e.message;updateSyncBadge();}
+}
+async function cloudAuth(mode){if(!sync.client)return toast('Primero configura Supabase.',true);let email=$('cloudEmail')?.value.trim(),password=$('cloudPassword')?.value;if(!email||!password)return toast('Introduce correo y contraseña.',true);
+ if(mode==='signup'&&password.length<8)return toast('Contraseña de al menos 8 caracteres.',true);
+ try{let res=mode==='signup'?await sync.client.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}):await sync.client.auth.signInWithPassword({email,password});if(res.error)throw res.error;
+ if(res.data?.session?.user){sync.user=res.data.session.user;await syncNow(true);toast('Sesión iniciada.');}else toast('Revisa tu correo para confirmar la cuenta y luego entra.');render();}
+ catch(e){toast('Error de acceso: '+e.message,true)}
+}
+async function cloudLogout(clear){if(!sync.client)return;
+ if(clear){if(Object.keys(sync.queue).length||Object.keys(sync.conflicts).length){if(!confirm('Hay cambios sin sincronizar. Se perderían de este dispositivo. ¿Continuar?'))return;}else if(!confirm('¿Cerrar sesión y borrar del navegador el historial local? Los datos ya sincronizados seguirán en Supabase.'))return;}
+ try{await sync.client.auth.signOut();sync.user=null;sync.status='local';if(clear){sync.queue={};sync.base={};sync.conflicts={};sync.account='';localStorage.removeItem(LAST_ACCOUNT);db=initialDB();syncShadow=snapshotOf(db);localStorage.setItem(KEY,JSON.stringify(db));saveSyncMeta();}updateSyncBadge();setTab('nube');}
+ catch(e){toast('No se pudo cerrar sesión: '+e.message,true)}
+}
+async function cloudRows(){let rows=[];for(let from=0;from<50000;from+=500){let {data,error}=await sync.client.from('entrena_items').select('kind,item_id,payload,deleted,updated_at').order('updated_at',{ascending:true}).range(from,from+499);if(error)throw error;rows.push(...(data||[]));if(!data||data.length<500)break;}return rows;}
+function rowMap(rows){let o={};for(let x of rows)o[skey(x.kind,x.item_id)]=x;return o;}
+function applySnapshot(rows){let cloud=rowMap(rows),next={version:3,mesocycles:[],workouts:[],polar:[],body:[],settings:{},createdAt:db.createdAt||new Date().toISOString()};
+ for(let row of rows){if(row.deleted)continue;if(row.kind==='settings'){next.settings=clone(row.payload);continue;}if(KINDS.includes(row.kind)&&row.payload?.id)next[row.kind].push(clone(row.payload));}
+ // Superponer cambios sin subir y conflictos sin resolver para no perder nada fuera de línea.
+ for(let q of [...Object.values(sync.queue),...Object.values(sync.conflicts).map(x=>x.local)]){if(!q)continue;let arr=next[q.kind];if(q.kind==='settings'){if(!q.deleted)next.settings=clone(q.payload);continue;}if(!arr)continue;let i=arr.findIndex(x=>x.id===q.itemId);if(q.deleted){if(i>=0)arr.splice(i,1)}else if(i>=0)arr[i]=clone(q.payload);else arr.push(clone(q.payload));}
+ db=next;sync.base=Object.fromEntries(Object.entries(cloud).map(([k,v])=>[k,{updated_at:v.updated_at,deleted:v.deleted}]));syncShadow=snapshotOf(db);
+ localStorage.setItem(KEY,JSON.stringify(db));saveSyncMeta();if(!db.mesocycles.some(m=>m.id===selectedMeso))selectedMeso=db.mesocycles[0]?.id;updateSyncBadge();if(!modalMode)render();
+}
+async function upsertRows(rows){for(let i=0;i<rows.length;i+=100){let {error}=await sync.client.from('entrena_items').upsert(rows.slice(i,i+100),{onConflict:'user_id,kind,item_id'});if(error)throw error;}}
+async function syncNow(manual=false){if(!sync.user||!sync.client||sync.busy||!navigator.onLine){if(manual&&!navigator.onLine)toast('Sin Internet: se guardará localmente.',true);return;}
+ if(sync.account&&sync.account!==sync.user.id){sync.status='error';sync.error='Este navegador tiene una caché de otra cuenta. Exporta JSON y limpia la caché antes de cambiar de cuenta.';updateSyncBadge();if(manual)toast(sync.error,true);return;}
+ sync.busy=true;sync.status='busy';updateSyncBadge();try{
+  let remote=await cloudRows();if(!remote.length){let init=snapshotOf(db),rows=Object.entries(init).map(([k,payload])=>{let ix=k.indexOf('::');return {user_id:sync.user.id,kind:k.slice(0,ix),item_id:k.slice(ix+2),payload,deleted:false}});await upsertRows(rows);remote=await cloudRows();sync.queue={};sync.conflicts={};}
+  let rm=rowMap(remote),toSend=[],sent=[];
+  for(let [k,q] of Object.entries(sync.queue)){let current=rm[k],same=current&&current.deleted===q.deleted&&(q.deleted||JSON.stringify(current.payload)===JSON.stringify(q.payload));if(same){sent.push([k,JSON.stringify(q)]);continue;}
+   if(!q.force&&current&&(!q.baseRevision||q.baseRevision!==current.updated_at)){
+    sync.conflicts[k]={kind:q.kind,itemId:q.itemId,local:clone(q),remote:{payload:current.payload,deleted:current.deleted,updated_at:current.updated_at}};delete sync.queue[k];continue;}
+   if(!current&&q.deleted){sent.push([k,JSON.stringify(q)]);continue;}
+   toSend.push({user_id:sync.user.id,kind:q.kind,item_id:q.itemId,payload:q.payload,deleted:q.deleted});sent.push([k,JSON.stringify(q)]);
+  }
+  if(toSend.length)await upsertRows(toSend);
+  for(let [k,oldQ] of sent){if(JSON.stringify(sync.queue[k])===oldQ)delete sync.queue[k];}
+  remote=await cloudRows();sync.account=sync.user.id;localStorage.setItem(LAST_ACCOUNT,sync.account);sync.ready=true;sync.lastOk=new Date().toISOString();sync.status='ok';sync.error='';applySnapshot(remote);if(manual)toast('Datos sincronizados correctamente.');
+ }catch(e){sync.status='error';sync.error='Error de sincronización: '+(e?.message||String(e));saveSyncMeta();updateSyncBadge();if(manual)toast(sync.error,true);}
+ finally{sync.busy=false;updateSyncBadge();if(tab==='nube'&&!modalMode)render();}
+}
+async function resolveConflict(key,keepLocal){let c=sync.conflicts[key];if(!c)return;if(keepLocal){if(!confirm('¿Sobrescribir en la nube este elemento con tu versión local?'))return;sync.queue[key]={...clone(c.local),force:true};delete sync.conflicts[key];saveSyncMeta();await syncNow(true);}
+ else{if(!confirm('¿Descartar la versión local de este elemento y conservar la que está en la nube? Haz antes una copia JSON si tienes dudas.'))return;delete sync.conflicts[key];saveSyncMeta();await syncNow(true);}
+}
+function mergeLegacy(){const old=readJson(V2_COPY,null);if(!old||!Array.isArray(old.mesocycles)||!Array.isArray(old.workouts))return toast('No hay copia v2 válida.',true);
+ if(!confirm('¿Fusionar tus datos v2 con la versión actual? No se borrarán las sesiones existentes. Se recomienda exportar primero un JSON.'))return;
+ const map=new Map();for(let m of old.mesocycles){let found=db.mesocycles.find(x=>x.start===m.start&&x.end===m.end);if(found)map.set(m.id,found.id);else{db.mesocycles.push(clone(m));map.set(m.id,m.id);}}
+ let added=0,upgraded=0;
+ for(let w of old.workouts){let same=db.workouts.find(x=>x.date===w.date&&x.type===w.type&&x.title===w.title);if(same){if(w.done&&!same.done){Object.assign(same,clone(w),{id:same.id,mesoId:map.get(w.mesoId)||same.mesoId});upgraded++;}}else{let t=clone(w);t.mesoId=map.get(w.mesoId)||w.mesoId;db.workouts.push(t);added++;}}
+ for(let p of old.polar||[]){if(!db.polar.some(x=>x.date===p.date)){db.polar.push(clone(p));added++;}}
+ for(let b of old.body||[]){if(!db.body.some(x=>x.date===b.date)){db.body.push(clone(b));added++;}}
+ persist();render();toast('Datos fusionados: '+added+' nuevos, '+upgraded+' sesiones completadas incorporadas.');
+}
+async function importLegacyFile(file){if(!file)return;try{let data=JSON.parse(await file.text());if(!Array.isArray(data.workouts)||!Array.isArray(data.mesocycles))throw new Error('Copia inválida');localStorage.setItem(V2_COPY,JSON.stringify(data));render();toast('Copia cargada. Pulsa Fusionar v2 cuando quieras incorporarla.');}catch(e){toast(e.message,true)}}
 
 /* ===== ACCIONES DE INTERFAZ ===== */
 $('nav').addEventListener('click',e=>{let b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)});
@@ -416,6 +559,9 @@ document.addEventListener('change',e=>{
  if(el.id==='statExercise'){statExercise=el.value;render()}
  if(el.id==='polarMetric'){polarMetric=el.value;render()}
  if(el.id==='polarRange'){polarRange=el.value;render()}
+ if(el.id==='bodyRange'){bodyRange=el.value;render()}
+ if(el.id==='bodyMetric'){bodyMetric=el.value;render()}
+ if(el.id==='legacyImport'){importLegacyFile(el.files?.[0]);el.value=''}
  if(el.id==='jsonImport'){importJson(el.files?.[0]);el.value=''}
 });
 document.addEventListener('click',e=>{
@@ -425,6 +571,22 @@ document.addEventListener('click',e=>{
  const i=Number(el.dataset.i),j=Number(el.dataset.j),wd=()=>db.workouts.find(w=>w.id===el.dataset.id),md=()=>db.mesocycles.find(m=>m.id===el.dataset.id);
  switch(act){
  case 'new-today':newOnDate();break;
+ case 'go-cloud':setTab('nube');break;
+ case 'body-new':newBody();break;
+ case 'body-edit':editBody(el.dataset.id);break;
+ case 'body-save':saveBody();break;
+ case 'body-delete':deleteBody();break;
+ case 'body-csv':exportBodyCsv();break;
+ case 'cloud-signup':cloudAuth('signup');break;
+ case 'cloud-login':cloudAuth('login');break;
+ case 'cloud-logout':cloudLogout(false);break;
+ case 'cloud-logout-clear':cloudLogout(true);break;
+ case 'cloud-sync':syncNow(true);break;
+ case 'cloud-refresh':render();break;
+ case 'conflict-local':resolveConflict(el.dataset.id,true);break;
+ case 'conflict-remote':resolveConflict(el.dataset.id,false);break;
+ case 'legacy-merge':mergeLegacy();break;
+ case 'legacy-export':if(localStorage.getItem(V2_COPY))saveBlob('EntrenaSUB9_backup_v2.json','application/json',localStorage.getItem(V2_COPY));break;
  case 'new-polar':newPolar();break;
  case 'new-polar-on-date':newPolar(el.dataset.date);break;
  case 'edit-polar':editPolar(el.dataset.id);break;
@@ -465,10 +627,11 @@ document.addEventListener('click',e=>{
  case 'export-polar-csv':exportPolarCsv();break;
  case 'save-settings':db.settings??={};db.settings.goal2k=$('target2k')?.value||'9:00';db.settings.targetDate=$('targetDate')?.value||'';persist();render();toast('Objetivos actualizados.');break;
  case 'save-reference':db.settings??={};db.settings.reference={run2k:$('ref2k')?.value||'',pushups:num($('refPush')?.value),plank:$('refPlank')?.value||'',agility:$('refAgility')?.value||''};persist();toast('Referencias personales guardadas.');break;
- case 'reset-all':if(confirm('¿Restablecer todos los mesociclos y borrar TODAS tus marcas guardadas?'))if(confirm('Última confirmación: perderás lo que no hayas exportado. ¿Continuar?')){localStorage.removeItem(KEY);db=initialDB();selectedMeso=db.mesocycles[0].id;selectedWeek=0;persist();setTab('panel');toast('Plantilla restaurada.')}break;
+ case 'reset-all':if(confirm('¿Restablecer todos los mesociclos y borrar TODAS tus marcas guardadas?'))if(confirm('Última confirmación: perderás lo que no hayas exportado. ¿Continuar?')){db=initialDB();selectedMeso=db.mesocycles[0].id;selectedWeek=0;persist();setTab('panel');toast('Plantilla restaurada.')}break;
  }
 });
 render();
+initCloud();
 </script>
 <style>
 /* Refuerzos para una edición cómoda en móvil y pantallas táctiles. */
@@ -478,6 +641,18 @@ render();
 .checkline>input{width:18px;height:18px;flex:0 0 auto}.exercise .sets input,.interval input{width:100%}
 .exercise .grid3,.dialogbody .grid3{gap:10px}.formfield textarea{margin:0}.dialogbody .formfield{margin-bottom:7px}
 @media(max-width:760px){.exercise .sets{grid-template-columns:35px repeat(5,minmax(0,1fr)) 37px}.dialogfoot{gap:8px}.dialogfoot button{white-space:normal}.dialogbody .grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.day .plus{font-size:10px}.desk-add{display:none}.topactions .chip{display:none}}
+
+.body-highlight{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.body-highlight strong{font-size:26px;color:#83efd0}
+.statusnote{font-size:12px;line-height:1.6;color:#afc8db}
+.cloudstatus{padding:11px 13px;border-radius:11px;border:1px solid #38556a;background:#152d3b;color:#cde0ec;margin:12px 0}
+.cloudstatus.warn{border-color:#91733d;background:#40341f;color:#ffe4b5}
+.cloudstatus.ok{border-color:#478875;background:#173b35;color:#b7f9df}
+.cloudstatus.bad{border-color:#9e4850;background:#4b282e;color:#ffd1d6}
+.metric-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.metric-grid .card{padding:13px}
+@media(max-width:1000px){.metric-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.topactions #syncState{font-size:10px;padding:7px 8px}.brand small{font-size:9px}}
 </style>
 </body>
 </html>
