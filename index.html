@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1423">
-<title>ENTRENA SUB9 v3.1 · Polar Flow</title>
+<title>ENTRENA SUB9 v3.2 · Polar Flow y actividad</title>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -16,7 +16,7 @@
 <div class="app">
  <header class="top"><div class="brand"><div class="logo">↗</div><div><b>ENTRENA<span style="color:var(--accent)">SUB9</span></b><small>Diario · Mesociclos · Marcas</small></div></div><div class="topactions"><button id="syncState" class="chip warn" data-action="go-cloud" title="Estado de sincronización">● Local · sin conectar</button><button class="primary" id="quickNew">＋ Sesión</button></div></header>
  <nav class="tabs" id="nav">
-  <button data-tab="panel" class="navbtn active">◈ Panel</button><button data-tab="calendario" class="navbtn">▦ Calendario</button><button data-tab="mesociclos" class="navbtn">▣ Mesociclos</button><button data-tab="historial" class="navbtn">◷ Historial</button><button data-tab="polar" class="navbtn">♥ Polar</button><button data-tab="polarflow" class="navbtn">⌁ Polar Flow</button><button data-tab="composicion" class="navbtn">⚖ Báscula</button><button data-tab="nube" class="navbtn">☁ Nube</button><button data-tab="estadisticas" class="navbtn">▥ Estadísticas</button><button data-tab="datos" class="navbtn">⚙ Datos</button>
+  <button data-tab="panel" class="navbtn active">◈ Panel</button><button data-tab="calendario" class="navbtn">▦ Calendario</button><button data-tab="mesociclos" class="navbtn">▣ Mesociclos</button><button data-tab="historial" class="navbtn">◷ Historial</button><button data-tab="polar" class="navbtn">♥ Polar</button><button data-tab="polarflow" class="navbtn">⌁ Polar Flow</button><button data-tab="actividad" class="navbtn">👟 Actividad y sueño</button><button data-tab="composicion" class="navbtn">⚖ Báscula</button><button data-tab="nube" class="navbtn">☁ Nube</button><button data-tab="estadisticas" class="navbtn">▥ Estadísticas</button><button data-tab="datos" class="navbtn">⚙ Datos</button>
  </nav>
  <main id="main"></main>
 </div>
@@ -97,7 +97,7 @@ function initialDB(){
  return db;
 }
 function loadDB(){try{let raw=localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY);if(raw){let x=JSON.parse(raw);if(Array.isArray(x.workouts)&&Array.isArray(x.mesocycles)){if(!Array.isArray(x.polar))x.polar=[];if(!Array.isArray(x.body))x.body=[];x.version=3;return x;}}}catch(e){console.warn(e)}return initialDB()}
-let db=loadDB();let tab='panel';let selectedMeso=db.mesocycles.find(m=>m.start<=today()&&m.end>=today())?.id||db.mesocycles[0]?.id;let selectedWeek=0;let draft=null;let editingMeso=null;let historyFilter='all';let statExercise='Press banca';let weeklyView=true;let editingPolar=null;let polarRange='30';let polarMetric='effort-tolerance';let editingBody=null;let bodyRange='90';let bodyMetric='weight';
+let db=loadDB();let tab='panel';let selectedMeso=db.mesocycles.find(m=>m.start<=today()&&m.end>=today())?.id||db.mesocycles[0]?.id;let selectedWeek=0;let draft=null;let editingMeso=null;let historyFilter='all';let statExercise='Press banca';let weeklyView=true;let editingPolar=null;let polarRange='30';let polarMetric='effort-tolerance';let editingBody=null;let bodyRange='90';let bodyMetric='weight';let activityRange='28';let activityMetric='steps';
 function persist(){try{db.version=3;syncTrackChanges();localStorage.setItem(KEY,JSON.stringify(db));scheduleSync();return true;}catch(e){toast('Sin espacio para guardar. Exporta copia de seguridad.',true);return false}}
 try{localStorage.setItem(KEY,JSON.stringify(db))}catch{}
 function mesoByDate(date){return db.mesocycles.find(m=>m.start<=date&&m.end>=date)}
@@ -148,6 +148,7 @@ function render(){
  if(tab==='historial')main.innerHTML=renderHistory();
  if(tab==='estadisticas')main.innerHTML=renderStats();
  if(tab==='polar')main.innerHTML=renderPolar();
+ if(tab==='actividad')main.innerHTML=renderActividad();
  if(tab==='polarflow')main.innerHTML=renderPolarFlow();
  if(tab==='composicion')main.innerHTML=renderBody();
  if(tab==='nube')main.innerHTML=renderCloud();
@@ -280,7 +281,12 @@ function renderPolarModal(){let p=editingPolar;if(!p)return;let exists=(db.polar
 function savePolar(){if(!editingPolar)return;let p=editingPolar;const dateOk=/^\d{4}-\d{2}-\d{2}$/.test(p.date)&&Number.isFinite(asDate(p.date).getTime());if(!dateOk)return toast('Fecha Polar no válida.',true);
  const fields=['load','effort','tolerance','nightHr','hrv','sleepHours','sleepScore','bodyWeight'];for(const k of fields){let x=num(p[k]);if(x!==null&&(x<0||!Number.isFinite(x)))return toast('Corrige el valor: '+k,true);}if(num(p.sleepHours)>24||num(p.sleepScore)>100)return toast('Revisa las horas y la puntuación del sueño.',true);
  const other=(db.polar||[]).find(x=>x.date===p.date&&x.id!==p.id);if(other)return toast('Ya tienes datos Polar para esta fecha: edita ese registro desde el historial.',true);
- db.polar??=[];let idx=db.polar.findIndex(x=>x.id===p.id);if(idx>=0)db.polar[idx]=clone(p);else db.polar.push(clone(p));if(!persist())return;closeModal();render();toast('Lectura Polar guardada. La gráfica ya está actualizada.');
+ db.polar??=[];let idx=db.polar.findIndex(x=>x.id===p.id);
+ if(idx>=0&&Array.isArray(p.importedFields)){
+  // Al corregir un valor manualmente, deja de actualizarse desde Polar automáticamente.
+  const previous=db.polar[idx];p.importedFields=p.importedFields.filter(k=>JSON.stringify(previous[k])===JSON.stringify(p[k]));
+ }
+ if(idx>=0)db.polar[idx]=clone(p);else db.polar.push(clone(p));if(!persist())return;closeModal();render();toast('Lectura Polar guardada. La gráfica ya está actualizada.');
 }
 
 function renderData(){return `${drawHead('Tus datos y seguridad','Respaldo local, exportaciones y sincronización opcional mediante Supabase. Las lecturas Polar pueden añadirse manualmente o importarse desde Polar Flow si conectas tu cuenta.')}<div class="two"><div class="card"><h2>Copias de seguridad</h2><p style="margin-top:9px">Los datos se guardan <b>en este navegador</b>. Si conectas una cuenta en ☁ Nube, también se sincronizan entre móvil y ordenador. Hasta que aparezca «Sincronizado», conserva la copia local.</p><div class="row" style="margin:12px 0"><button class="primary" data-action="export-json">↓ Exportar copia JSON</button><button data-action="import-json">↑ Importar copia JSON</button></div><div class="row"><button data-action="export-csv">↓ Descargar resumen CSV</button><button data-action="export-sets-csv">↓ Descargar series CSV</button><button data-action="export-polar-csv">↓ Descargar Polar CSV</button></div><input id="jsonImport" type="file" accept="application/json,.json" class="hide"><div class="inline-note" style="margin-top:16px">Recomendación: exporta una copia JSON cada semana. Si borras los datos del navegador, pierdes el historial local. La importación reemplaza el contenido existente previa confirmación.</div></div>
@@ -549,6 +555,47 @@ function mergeLegacy(){const old=readJson(V2_COPY,null);if(!old||!Array.isArray(
 async function importLegacyFile(file){if(!file)return;try{let data=JSON.parse(await file.text());if(!Array.isArray(data.workouts)||!Array.isArray(data.mesocycles))throw new Error('Copia inválida');localStorage.setItem(V2_COPY,JSON.stringify(data));render();toast('Copia cargada. Pulsa Fusionar v2 cuando quieras incorporarla.');}catch(e){toast(e.message,true)}}
 
 
+
+/* ===== Actividad diaria y sueño importados desde Polar Flow ===== */
+function exportActivityCsv(){
+ const header=['Fecha','Pasos','Objetivo actividad %','Minutos activos','Calorías total','Calorías activas','Distancia pasos km','Sueño h','Puntuación sueño','Sueño ligero min','Sueño profundo min','Sueño REM min','Interrupciones min','HRV ms','FC media noche','Respiración media noche'];
+ const keys=['date','steps','activityPercent','activeMinutes','caloriesTotal','caloriesActive','distanceStepsKm','sleepHours','sleepScore','sleepLightMin','sleepDeepMin','sleepRemMin','sleepInterruptMin','hrv','nightAvgHr','breathingRateAvg'];
+ const rows=[header,...polarList().map(p=>keys.map(k=>p[k]??''))];
+ saveBlob('EntrenaSUB9_Actividad_Sueno_'+today()+'.csv','text/csv;charset=utf-8',csv(rows));
+}
+const ACTIVITY_METRICS=[
+ ['steps','Pasos','pasos'],['activityPercent','Objetivo diario','%'],
+ ['activeMinutes','Minutos activo','min'],['caloriesTotal','Calorías totales','kcal'],
+ ['caloriesActive','Calorías activas','kcal'],['distanceStepsKm','Distancia estimada por pasos','km'],
+ ['sleepHours','Horas de sueño','h'],['sleepScore','Puntuación del sueño','/100'],
+ ['sleepDeepMin','Sueño profundo','min'],['sleepRemMin','Sueño REM','min'],
+ ['sleepLightMin','Sueño ligero','min'],['sleepInterruptMin','Interrupciones del sueño','min'],
+ ['hrv','HRV nocturna','ms'],['nightAvgHr','FC media nocturna','lpm'],
+ ['breathingRateAvg','Respiración nocturna','rpm']
+];
+function activityData(){let after=activityRange==='all'?'0000-01-01':addDays(today(),1-Number(activityRange));return polarList().filter(x=>x.date>=after&&x.date<=today() && ['steps','sleepHours','sleepScore','sleepDeepMin','hrv','nightAvgHr','activityPercent'].some(k=>num(x[k])!==null));}
+function humanSleepClock(iso){if(!iso)return '—';const parts=String(iso).match(/T(\d{2}:\d{2})/);return parts?parts[1]:'—'}
+function renderActividad(){
+ const all=activityData(),latest=[...all].reverse(),daySteps=latest.find(x=>num(x.steps)!==null),night=latest.find(x=>num(x.sleepHours)!==null||num(x.sleepScore)!==null),withSteps=all.filter(x=>num(x.steps)!==null);
+ const stepsSum=withSteps.reduce((a,x)=>a+nz(x.steps),0),stepsAvg=withSteps.length?Math.round(stepsSum/withSteps.length):null;
+ const selected=ACTIVITY_METRICS.find(x=>x[0]===activityMetric)||ACTIVITY_METRICS[0];
+ const chart=all.map(p=>({date:p.date,y:num(p[selected[0]])})).filter(p=>p.y!==null);
+ const part=(label,min)=>`<div class="barline"><span class="label">${label}</span><div class="track"><i style="width:${night&&nz(night.sleepHours)>0?Math.min(100,nz(min)/(night.sleepHours*60)*100):0}%"></i></div><b class="amount">${num(min)!=null?fmtN(min,0)+' min':'—'}</b></div>`;
+ return `${drawHead('Actividad y sueño · Polar Flow','Pasos y hábitos diarios importados automáticamente; gimnasio y ejercicios del profesor siguen siendo manuales.',`<div class="row"><button class="soft" data-action="activity-csv">↓ Exportar CSV</button><button class="primary" data-action="polar-fetch" ${!sync.user||polarRemote.busy?'disabled':''}>↻ Importar Polar</button></div>`)}
+ <div class="row" style="margin-bottom:15px"><span class="meta">Periodo:</span><select class="filterselect" id="activityRange">${[['7','7 días'],['28','28 días'],['90','90 días'],['all','Todo el historial']].map(([v,t])=>`<option value="${v}" ${activityRange===v?'selected':''}>${t}</option>`).join('')}</select><span class="chip">${all.length} días con lecturas</span></div>
+ <div class="kpis">
+ <div class="card stat"><div class="k-label">Pasos últimos disponibles</div><div class="k-value">${daySteps?fmtN(daySteps.steps,0):'—'}</div><div class="k-foot">${daySteps?fmtDate(daySteps.date):'Sin datos de actividad'}</div></div>
+ <div class="card stat"><div class="k-label">Media de pasos</div><div class="k-value">${stepsAvg!==null?fmtN(stepsAvg,0):'—'}</div><div class="k-foot">${withSteps.length} días medidos</div></div>
+ <div class="card stat"><div class="k-label">Último sueño</div><div class="k-value">${night&&num(night.sleepHours)!==null?fmtN(night.sleepHours,2)+' h':'—'}</div><div class="k-foot">${night?fmtDate(night.date):'Sin datos de sueño'}</div></div>
+ <div class="card stat"><div class="k-label">Puntuación sueño</div><div class="k-value">${night&&num(night.sleepScore)!==null?fmtN(night.sleepScore,0)+'/100':'—'}</div><div class="k-foot">Nightly Recharge se consulta por separado</div></div>
+ </div>
+ <div class="two" style="margin-top:15px">
+ <div class="card"><div class="row space"><h2>Gráfica de evolución</h2><select class="filterselect" id="activityMetric">${ACTIVITY_METRICS.map(([key,label])=>`<option value="${key}" ${activityMetric===key?'selected':''}>${esc(label)}</option>`).join('')}</select></div>${lineChart(chart,selected[2])}<p class="footnote">Los datos de días sin lectura se omiten; no se representan como cero. No son mediciones en tiempo real.</p></div>
+ <div class="card"><h2>Última noche registrada</h2>${night?`<div class="meta" style="margin:10px 0">${fmtDate(night.date)} · ${humanSleepClock(night.sleepStartTime)}–${humanSleepClock(night.sleepEndTime)}</div>${part('Sueño ligero',night.sleepLightMin)}${part('Sueño profundo',night.sleepDeepMin)}${part('Sueño REM',night.sleepRemMin)}<div class="borderline"></div><div class="listrow"><span>Interrupciones</span><b>${num(night.sleepInterruptMin)!==null?fmtN(night.sleepInterruptMin,0)+' min':'—'}</b></div><div class="listrow"><span>Continuidad</span><b>${num(night.sleepContinuity)!==null?fmtN(night.sleepContinuity,1):'—'}</b></div><div class="listrow"><span>Ciclos</span><b>${num(night.sleepCycles)!==null?fmtN(night.sleepCycles,0):'—'}</b></div><div class="listrow"><span>HRV</span><b>${num(night.hrv)!==null?fmtN(night.hrv,1)+' ms':'—'}</b></div><div class="listrow"><span>FC media nocturna</span><b>${num(night.nightAvgHr)!==null?fmtN(night.nightAvgHr,0)+' lpm':'—'}</b></div><div class="listrow"><span>Respiración</span><b>${num(night.breathingRateAvg)!==null?fmtN(night.breathingRateAvg,1)+' rpm':'—'}</b></div>`:`<div class="emptystate">Todavía no hay noches importadas. Conecta tu reloj a Polar Flow y después pulsa «Importar Polar».</div>`}</div>
+ </div>
+ <div class="card" style="margin-top:15px"><h2>Historial diario</h2><div class="table-scroll"><table class="mini-table"><thead><tr><th>Fecha</th><th class="numcell">Pasos</th><th class="numcell">Actividad %</th><th class="numcell">Calorías</th><th class="numcell">Sueño</th><th class="numcell">Calidad</th><th class="numcell">HRV</th></tr></thead><tbody>${latest.slice(0,90).map(p=>`<tr><td>${fmtDate(p.date)}</td><td class="numcell">${num(p.steps)!==null?fmtN(p.steps,0):'—'}</td><td class="numcell">${num(p.activityPercent)!==null?fmtN(p.activityPercent,0):'—'}</td><td class="numcell">${num(p.caloriesTotal)!==null?fmtN(p.caloriesTotal,0):'—'}</td><td class="numcell">${num(p.sleepHours)!==null?fmtN(p.sleepHours,2)+' h':'—'}</td><td class="numcell">${num(p.sleepScore)!==null?fmtN(p.sleepScore,0):'—'}</td><td class="numcell">${num(p.hrv)!==null?fmtN(p.hrv,1):'—'}</td></tr>`).join('')||'<tr><td colspan="7">Sin datos todavía</td></tr>'}</tbody></table></div></div>
+ <div class="inline-note" style="margin-top:15px">La actividad diaria y las sesiones deportivas son registros distintos: los pasos NO se suman a los kilómetros de carrera, para evitar contarlos dos veces. Las fases de sueño son estimaciones del dispositivo. Algunos campos dependen del reloj y de la API.</div>`;
+}
 /* ===== POLAR FLOW · AccessLink v3 (sin secretos en el navegador) ===== */
 const POLAR_OAUTH_KEY='entrena_polar_oauth_state_v1';
 const POLAR_LAST_KEY='entrena_polar_auto_fetch_v1';
@@ -581,11 +628,15 @@ function renderPolarFlow(){
  <div class="listrow"><span>♥ Cardio Load</span><span class="chip">Carga · esfuerzo · tolerancia</span></div>
  <div class="listrow"><span>☾ Sueño y recuperación</span><span class="chip">Sueño · HRV · puntuación</span></div>
  <div class="listrow"><span>🏊 Natación</span><span class="chip">Metros y pulso, si los registra Polar</span></div>
+ <div class="listrow"><span>👟 Pasos y actividad diaria</span><span class="chip">Pasos · calorías · minutos activos</span></div>
+ <div class="listrow"><span>☾ Fases del sueño</span><span class="chip">REM · profundo · ligero · interrupciones</span></div>
+ <button data-tab="actividad" class="soft" style="margin-top:12px">👟 Ver actividad y sueño</button>
  <p class="help" style="margin-top:15px">Las sesiones se añaden al historial y, si existe una única sesión planificada pendiente del mismo día y tipo, se completan sus métricas sin borrar tu planificación. El detalle de ejercicios del profesor y las repeticiones/pesos de fuerza seguirán siendo manuales cuando Polar no los ofrezca.</p>
  <p class="help">La FC media nocturna no equivale a tu FC mínima: esta última se deja en blanco hasta que la anotes con el dato correcto.</p>
  </div></div>
  <div class="card" style="margin-top:15px"><h2>3 · Sincronización entre dispositivos</h2>
  <p class="help">Al importar se guardan los registros en ENTRENA SUB9 y se solicita subirlos a tu cuenta Supabase. Revisa que figure «✓ Sincronizado» antes de cambiar de dispositivo. Cuando abras esta página con conexión, intentará consultar Polar periódicamente (aprox. una vez por hora); no funciona en segundo plano con la web cerrada.</p>
+ <p class="help">Polar solo envía las sesiones cuando el reloj se sincroniza con Polar Flow. El gimnasio sigue siendo manual: no se importan repeticiones ni kilos automáticamente.</p>
  <p class="help">La API Polar AccessLink v3 limita ejercicios recientes a los subidos después de vincular tu cuenta y dentro de los últimos 30 días; Cardio Load y sueño ofrecen ventanas recientes. No reproduce automáticamente todo el historial antiguo de Polar Flow.</p>
  <p class="help">Para empezar necesitas un cliente OAuth en <a href="https://admin.polaraccesslink.com/" target="_blank" rel="noopener noreferrer">Polar AccessLink</a>, con dirección de retorno <code>https://psanpa.github.io/entrena-sub9/</code>.</p></div>`;
 }
@@ -642,20 +693,40 @@ function polarMerge(data){
   let x=db.polar.find(q=>q.date===p.date);
   if(!x){x=newPolarRecord(p.date);x.source='Polar Flow';db.polar.push(x);summary.newDaily++;changed=true;}
   let filled=false;
-  for(const key of ['load','effort','tolerance','hrv','sleepHours','sleepScore']){
-   const v=num(p[key]);if(v!==null&&x[key]==null){x[key]=v;filled=true;changed=true;}
+  const fields=['load','effort','tolerance','hrv','sleepHours','sleepScore','nightlyRechargeStatus','nightAvgHr',
+   'steps','activityPercent','caloriesTotal','caloriesActive','inactivityAlerts','distanceStepsKm',
+   'activeMinutes','inactiveMinutes','sleepLightMin','sleepDeepMin','sleepRemMin','sleepUnrecognizedMin',
+   'sleepInterruptMin','sleepShortInterruptMin','sleepLongInterruptMin','sleepGoalMin','sleepContinuity',
+   'sleepCycles','sleepCharge','sleepRating','ansCharge','ansChargeStatus','breathingRateAvg'];
+  x.importedFields=Array.isArray(x.importedFields)?x.importedFields:[];
+  for(const key of fields){const v=num(p[key]);if(v===null)continue;
+   const wasImported=x.importedFields.includes(key)||(x.source==='Polar Flow'&&x[key]!=null);
+   if(x[key]==null||wasImported){if(x[key]!==v){x[key]=v;filled=true;changed=true;}if(!x.importedFields.includes(key)){x.importedFields.push(key);changed=true;}}
   }
-  if(p.nightlyRechargeStatus!=null&&x.nightlyRechargeStatus==null){x.nightlyRechargeStatus=p.nightlyRechargeStatus;filled=true;changed=true;}
-  if(p.nightAvgHr!=null&&x.nightAvgHr==null){x.nightAvgHr=p.nightAvgHr;filled=true;changed=true;}
+  for(const key of ['sleepStartTime','sleepEndTime']){
+   if(typeof p[key]==='string' && (x[key]==null||x.importedFields.includes(key)||x.source==='Polar Flow')){
+    if(x[key]!==p[key]){x[key]=p[key];filled=true;changed=true;}if(!x.importedFields.includes(key)){x.importedFields.push(key);changed=true;}
+   }
+  }
   if(filled&&x.source!=='Polar Flow')summary.updatedDaily++;
  }
+
  for(const p of data.exercises||[]){
   if(!p.sourceId||!/^\d{4}-\d\d-\d\d$/.test(p.date))continue;
   let existing=db.workouts.find(w=>w.polarSourceId===p.sourceId);
   if(existing){summary.existingWorkouts++;continue;}
-  const t=['gym','run','swim'].includes(p.kind)?p.kind:'other';
+  // Gimnasio se registra manualmente; no importar sesiones genéricas del reloj.
+  if(!['run','swim'].includes(p.kind))continue;
+  const t=p.kind;
   let candidates=db.workouts.filter(w=>w.date===p.date&&w.type===t&&!w.done&&!w.polarSourceId);
-  const match=t!=='gym'&&t!=='other'&&candidates.length===1?candidates[0]:null;
+  let match=candidates.length===1?candidates[0]:null;
+  if(!match){
+   const similar=db.workouts.filter(w=>w.date===p.date&&w.type===t&&w.done&&!w.polarSourceId&&
+    num(w.cardio?.distance)!==null&&p.distanceMeters>0&&
+    Math.abs(nz(w.cardio.distance)-(t==='run'?p.distanceMeters/1000:p.distanceMeters)) <= (t==='run'?0.05:50)&&
+    parseTime(w.cardio?.duration)>0&&p.durationSec>0&&Math.abs(parseTime(w.cardio.duration)-p.durationSec)<90);
+   if(similar.length===1)match=similar[0];
+  }
   let w=match||newWorkout(p.date,t,mesoByDate(p.date)?.id||null);
   if(!match){w.title='Polar · '+({'gym':'Gimnasio','run':'Carrera','swim':'Natación','other':'Entrenamiento'}[t]);w.exercises=[];db.workouts.push(w);summary.newWorkouts++;}
   else summary.filledPlanned++;
@@ -667,7 +738,7 @@ function polarMerge(data){
   if(p.maxHr!=null)w.cardio.maxHr=p.maxHr;
   w.cardio.zoneMins=w.cardio.zoneMins||{};
   for(const [z,v] of Object.entries(p.zoneMins||{}))if(/^Z[1-6]$/.test(z)&&num(v)!=null)w.cardio.zoneMins[z]=v;
-  w.note=(w.note? w.note+'\n':'')+'Datos de Polar Flow (sin modificar tus series de fuerza ni ejercicios de piscina).';
+  if(!w.note?.includes('Datos de Polar Flow'))w.note=(w.note? w.note+'\n':'')+'Datos de Polar Flow (sin modificar tus series de fuerza ni ejercicios de piscina).';
   changed=true;
  }
  if(changed)persist();
@@ -682,7 +753,7 @@ async function polarFetch(silent=false){
   const data=await polarInvoke('pull');
   const counts=polarMerge(data);
   polarRemote.lastSync=data.fetchedAt||new Date().toISOString();polarRemote.warnings=data.warnings||[];polarRemote.connected=true;polarRemote.checked=true;
-  polarRemote.summary=`Polar consultado: ${counts.newDaily} días nuevos, ${counts.updatedDaily} días ampliados, ${counts.newWorkouts} entrenos añadidos y ${counts.filledPlanned} sesiones planificadas completadas. ${counts.existingWorkouts} entrenos ya existentes.`;
+  polarRemote.summary=`Polar consultado: ${counts.newDaily} días nuevos de actividad/recuperación, ${counts.updatedDaily} días ampliados, ${counts.newWorkouts} entrenos añadidos y ${counts.filledPlanned} sesiones planificadas completadas. ${counts.existingWorkouts} entrenos ya existentes.`;
   localStorage.setItem(POLAR_LAST_KEY+':'+sync.user.id,String(Date.now()));
   if(!sync.busy)await syncNow();
   if(!silent)toast('Polar importado. Comprueba el estado de sincronización en ☁ Nube.');
@@ -720,6 +791,8 @@ document.addEventListener('change',e=>{
  if(el.id==='statExercise'){statExercise=el.value;render()}
  if(el.id==='polarMetric'){polarMetric=el.value;render()}
  if(el.id==='polarRange'){polarRange=el.value;render()}
+ if(el.id==='activityRange'){activityRange=el.value;render()}
+ if(el.id==='activityMetric'){activityMetric=el.value;render()}
  if(el.id==='bodyRange'){bodyRange=el.value;render()}
  if(el.id==='bodyMetric'){bodyMetric=el.value;render()}
  if(el.id==='legacyImport'){importLegacyFile(el.files?.[0]);el.value=''}
