@@ -565,7 +565,7 @@ function renderPolarFlow(){
  let status=polarRemote.busy?'warn':polarRemote.error?'bad':polarRemote.connected?'ok':'warn';
  return `${drawHead('Polar Flow · Importación directa','Importa sesiones y recuperación desde Polar Flow, sin escribir ritmos ni cargas a mano.',`<button data-tab="polar">♥ Ver gráficas Polar</button>`)}
  <div class="two"><div class="card"><h2>1 · Conexión con Polar</h2>
- <p class="help">Necesitas haber configurado el cliente AccessLink y la función polar-sync de Supabase. Los secretos se guardan en Supabase; no en GitHub.</p>
+ <p class="help">Necesitas haber configurado el cliente AccessLink y la función dynamic-processor de Supabase. Los secretos se guardan en Supabase; no en GitHub.</p>
  <div class="cloudstatus ${status}">${esc(polarUIStatus())}</div>
  ${polarRemote.connectedAt?`<div class="meta">Conectado desde ${esc(new Date(polarRemote.connectedAt).toLocaleString('es-ES'))}</div>`:''}
  <div class="row" style="margin-top:15px"><button data-action="polar-status" ${!logged||polarRemote.busy?'disabled':''}>↻ Comprobar conexión</button>
@@ -591,7 +591,7 @@ function renderPolarFlow(){
 }
 async function polarInvoke(action,rest={}){
  if(!sync.user||!sync.client)throw Error('Inicia sesión en ☁ Nube antes de conectar Polar.');
- const {data,error}=await sync.client.functions.invoke('polar-sync',{body:{action,...rest}});
+ const {data,error}=await sync.client.functions.invoke('dynamic-processor',{body:{action,...rest}});
  if(error){let message=error.message||'No se pudo conectar con la función de Polar.';
    try{const detail=await error.context?.json?.();message=detail?.error||message;}catch{}
    throw Error(message);
