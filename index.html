@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1423">
-<title>ENTRENA SUB9 v3.3 · Tareas y Polar</title>
+<title>ENTRENA SUB9 v3.3.1 · Sin duplicados</title>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -11,6 +11,7 @@
 @media(max-width:1024px){.days{grid-template-columns:repeat(4,minmax(0,1fr))}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:760px){.app{padding:0 12px 110px}.top{padding:13px 1px}.brand small{font-size:10px}.brand b{font-size:15px}.topactions .chip{display:none}.tabs{gap:4px;margin:0 -12px 17px;padding:0 8px 11px}.navbtn{font-size:12px;padding:9px 10px}.card{padding:15px}.hero{padding:19px;min-height:auto}.hero:after{font-size:170px;bottom:-53px;right:-3px}.kpis{gap:9px}.stat .k-value{font-size:24px}.two,.three,.mesolist,.grid4{grid-template-columns:1fr}.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.days{grid-template-columns:1fr;gap:6px}.day{min-height:0;padding:10px 12px;display:grid;grid-template-columns:88px minmax(0,1fr) 62px;gap:9px;align-items:center}.day .daytop{margin:0;display:block}.day .num{font-size:20px}.day .dayacts{min-width:0}.day .plus{margin:0;padding:6px}.day .dayact{margin:3px 0;padding:7px}.dialogbody{max-height:calc(100dvh - 150px)}.overlay{padding:0}.dialog,.dialog.wide{min-height:100dvh;border-radius:0;max-width:none;margin:0}.dialogheader{padding:13px}.dialogbody{padding:13px}.dialogfoot{padding:11px 13px;position:sticky;bottom:0;z-index:2}.exercise{padding:10px}.exercise .sets{grid-template-columns:29px repeat(4,minmax(0,1fr)) 26px;gap:3px}.exercise .sets.compact{grid-template-columns:29px repeat(3,minmax(0,1fr)) 26px}.exercise .sets input{font-size:12px;padding:7px 1px}.exercise .sets .columnname{font-size:9px}.interval{grid-template-columns:24px repeat(4,minmax(0,1fr)) 26px;gap:3px}.interval input{padding:7px 1px;font-size:12px}.record-grid{grid-template-columns:1fr}.topactions button{padding:9px}.weektabs{gap:3px}.weektabs button{font-size:11px;padding:7px 9px}}
 .polarlegends{display:flex;flex-wrap:wrap;gap:15px;margin:0 0 14px;color:#c4d5e9;font-size:12px}.polarlegend{display:inline-flex;gap:7px;align-items:center}.polarlegend i{width:17px;height:3px;border-radius:3px;display:block}.mini-table th,.mini-table td{white-space:nowrap}
 </style>
+<!-- v3.3.1: conciliación segura de sesiones Polar duplicadas. -->
 </head>
 <body>
 <div class="app">
@@ -131,6 +132,55 @@ function sessionDetails(w){
  if(w.type==='swim'){const p=swimProgress(w);return p.total?`${p.done}/${p.total} bloques · datos opcionales`:'Datos de piscina opcionales';}
  return w.type==='run'?'Polar puede completar la carrera':'Registro manual o importación Polar';
 }
+// Identificar únicamente parejas inequívocas: un registro importado de Polar
+// y una sesión manual o planificada de la MISMA fecha y deporte.
+// Si dos sesiones tienen distancias o duraciones reales incompatibles,
+// se consideran entrenamientos distintos y no se ofrecen para fusionar.
+function polarDuplicatePairs(){
+ const pairs=[];
+ for(const incoming of db.workouts.filter(w=>w.polarSourceId&&['run','swim'].includes(w.type))){
+  const opts=db.workouts.filter(w=>w.id!==incoming.id&&w.date===incoming.date&&w.type===incoming.type&&!w.polarSourceId);
+  if(opts.length!==1)continue;
+  const target=opts[0], a=target.cardio||{}, b=incoming.cardio||{};
+  const ad=nz(a.distance),bd=nz(b.distance),ta=parseTime(a.duration),tb=parseTime(b.duration);
+  if(ad>0&&bd>0&&Math.abs(ad-bd)>(incoming.type==='swim'?50:0.05))continue;
+  if(ta>0&&tb>0&&Math.abs(ta-tb)>90)continue;
+  pairs.push({targetId:target.id,sourceId:incoming.id,date:incoming.date,kind:incoming.type,targetTitle:target.title,sourceTitle:incoming.title});
+ }
+ return pairs;
+}
+function reconcilePolarPair(a,b){
+ // Conservar el ID de la sesión planificada, sus ejercicios de piscina y sus objetivos.
+ a.cardio=a.cardio||{};const other=b.cardio||{};
+ for(const k of ['distance','duration','avgHr','maxHr']){
+  if(other[k]!==undefined&&other[k]!==null&&other[k]!==''&&((k==='duration'&&parseTime(other[k])>0)||(k!=='duration'&&num(other[k])!==null&&num(other[k])>0))){a.cardio[k]=other[k];}
+ }
+ a.cardio.zoneMins=a.cardio.zoneMins||{};
+ for(const [k,v] of Object.entries(other.zoneMins||{}))if(/^Z[1-6]$/.test(k)&&num(v)!==null)a.cardio.zoneMins[k]=v;
+ a.polarSourceId=b.polarSourceId;
+ if(b.polarSport!==undefined)a.polarSport=b.polarSport;
+ a.done=true;
+ a.doneSource='polar';
+ a.completedAt=a.completedAt||b.completedAt||new Date().toISOString();
+ if(b.note&&!(a.note||'').includes(b.note))a.note=[a.note,b.note].filter(Boolean).join('\n');
+ // No sustituimos la lista de ejercicios del profesor, intervalos ni marcas personales.
+}
+function reviewPolarDuplicates(){
+ const pairs=polarDuplicatePairs();
+ if(!pairs.length){toast('No hay parejas de entrenamientos Polar y planificados para unificar.');return;}
+ const detail=pairs.slice(0,12).map(x=>`${fmtDate(x.date)} · ${typeLabel(x.kind)}: ${x.targetTitle} + ${x.sourceTitle}`).join('\n');
+ if(!confirm(`He detectado ${pairs.length} posible(s) duplicado(s) de Polar.\n\n${detail}${pairs.length>12?'\n...':''}\n\nSe conservará la sesión planificada, se añadirán sus métricas Polar y se eliminará la tarjeta importada repetida. Se conservarán las anotaciones y ejercicios manuales.\n\nAntes de aceptar, exporta una copia JSON en Datos. ¿Unificar estas sesiones?`))return;
+ let merged=0;
+ for(const pair of pairs){
+  const a=db.workouts.find(w=>w.id===pair.targetId),b=db.workouts.find(w=>w.id===pair.sourceId);
+  if(!a||!b||!b.polarSourceId||a.polarSourceId)continue;
+  reconcilePolarPair(a,b);
+  db.workouts=db.workouts.filter(w=>w.id!==b.id);
+  merged++;
+ }
+ if(merged){persist();render();toast(`${merged} pareja(s) unificada(s). Comprueba ☁ Nube hasta ver ✓ Sincronizado.`);}
+}
+
 function quickCompleteWorkout(workoutId){
  const w=db.workouts.find(x=>x.id===workoutId);
  if(!w||w.done)return;
@@ -219,10 +269,10 @@ function renderCalendar(){const m=getMeso();if(!m)return `<div class="card">No t
  }
  body+=`<div class="calendarWeek"><div class="weektitle"><span>Semana ${week+1} · ${fmtDate(start)} — ${fmtDate(end)}</span><span>${db.workouts.filter(w=>w.date>=start&&w.date<=end&&w.done).length} completadas</span></div><div class="days">${ds.join('')}</div></div>`;
  }
- return `${drawHead('Calendario del mesociclo','Selecciona el día y abre la sesión para anotar las marcas.',`<button class="primary" data-action="new-today">＋ Nueva sesión</button>`)}
+ return `${drawHead('Calendario del mesociclo','Selecciona el día y abre la sesión para anotar las marcas.',`<div class="row"><button class="small soft" data-action="review-polar-duplicates">Revisar duplicados Polar</button><button class="primary" data-action="new-today">＋ Nueva sesión</button></div>`)}
  <div class="card" style="margin-bottom:14px"><div class="grid2"><div><label>Mesociclo</label><select id="calendarMeso">${db.mesocycles.map(x=>`<option value="${esc(x.id)}" ${x.id===m.id?'selected':''}>${esc(x.title)}</option>`).join('')}</select></div><div><label>Periodo</label><div style="font-size:14px;padding:10px 0">${fmtDate(m.start)} — ${fmtDate(m.end)}</div></div></div><div class="row space" style="margin-top:12px"><div class="row"><button class="small" data-action="prev-meso" ${index===0?'disabled':''}>← Mesociclo anterior</button><button class="small" data-action="next-meso" ${index===db.mesocycles.length-1?'disabled':''}>Siguiente →</button></div><div class="row"><button class="small" data-action="edit-meso" data-id="${esc(m.id)}">Editar fechas</button><button class="soft small" data-action="fill-meso" data-id="${esc(m.id)}">Rellenar huecos con plantilla</button></div></div></div>
  <div class="sectionhead"><div class="row"><button class="small ${weeklyView?'primary':''}" data-action="toggle-week" data-view="week">Por semana</button><button class="small ${!weeklyView?'primary':''}" data-action="toggle-week" data-view="all">Mesociclo completo</button></div>${weeklyView?`<div class="weektabs">${Array.from({length:count},(_,i)=>`<button class="small ${i===selectedWeek?'active':''}" data-action="week" data-week="${i}">S${i+1}</button>`).join('')}</div>`:''}</div>
- ${body}<div class="inline-note">○ Pendiente · ◐ En curso · ✓ Hecha. En gimnasio abre la tarea y marca los ejercicios; en piscina puedes pulsar ✓ sin introducir ningún dato. Polar completa carreras y natación importadas cuando las reconoce.</div>`;
+ ${body}<div class="inline-note">○ Pendiente · ◐ En curso · ✓ Hecha. En gimnasio abre la tarea y marca los ejercicios; en piscina puedes pulsar ✓ sin introducir ningún dato. Polar completa carreras y natación cuando encuentra su sesión planificada. Si ves dos tarjetas del mismo deporte y día, usa «Revisar duplicados Polar».</div>`;
 }
 function renderMesocycles(){let arr=[...db.mesocycles].sort((a,b)=>a.start.localeCompare(b.start));
  return `${drawHead('Mis mesociclos','Crea, renombra, mueve o cambia el contenido de cualquier bloque.',`<button class="primary" data-action="add-meso">＋ Crear mesociclo</button>`)}<div class="mesolist">${arr.map((m,i)=>{
@@ -771,6 +821,12 @@ function polarMerge(data){
   const t=p.kind;
   let candidates=db.workouts.filter(w=>w.date===p.date&&w.type===t&&!w.polarSourceId&&(!w.done||(!nz(w.cardio?.distance)&&!parseTime(w.cardio?.duration))));
   let match=candidates.length===1?candidates[0]:null;
+  // Si hay varias actividades del mismo deporte, solo se elige una cuando
+  // existe una única planificación que coincide de forma inequívoca.
+  if(!match&&candidates.length>1){
+   const planned=candidates.filter(w=>w.mesoId&&w.cardio?.plannedDistance!=null);
+   if(planned.length===1)match=planned[0];
+  }
   if(!match){
    const similar=db.workouts.filter(w=>w.date===p.date&&w.type===t&&w.done&&!w.polarSourceId&&
     num(w.cardio?.distance)!==null&&p.distanceMeters>0&&
@@ -884,6 +940,7 @@ document.addEventListener('click',e=>{
  case 'new-on-date':newOnDate(el.dataset.date);break;
  case 'edit-workout':openWorkout(el.dataset.id);break;
  case 'quick-complete':quickCompleteWorkout(el.dataset.id);break;
+ case 'review-polar-duplicates':reviewPolarDuplicates();break;
  case 'close-modal':closeModal();break;
  case 'save-workout':saveWorkout(false);break;
  case 'finish-workout':saveWorkout(true);break;
