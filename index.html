@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1423">
-<title>ENTRENA SUB9 v3.5 · Plan semanal y series</title>
+<title>ENTRENA SUB9 v3.6 · Cargas y descansos</title>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -20,6 +20,18 @@
 @media(max-width:780px){.plan-row-top{grid-template-columns:1fr 1fr}.plan-row-top input{grid-column:1/-1}.plan-row-top button{grid-column:1/-1}.plan-series-mini{grid-template-columns:1fr 1fr}.plan-sticky-actions{position:static}}
 </style>
 <!-- v3.3.1: conciliación segura de sesiones Polar duplicadas. -->
+
+<style>
+/* v3.6: descansos automáticos y estadísticas del gimnasio */
+.interval{grid-template-columns:28px repeat(5,minmax(105px,1fr)) 32px;min-width:840px}
+.interval-rest .formfield{margin-bottom:0}
+.rest-auto-check{display:flex;align-items:center;gap:6px;font-size:11px;color:#9be7d1;font-weight:650;margin:5px 0 0;cursor:pointer;white-space:nowrap}
+.rest-auto-check input{width:16px;height:16px;accent-color:#62e3bc;flex:none}
+.plan-series-mini{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));align-items:end}
+.real-sets-table{width:100%;border-collapse:collapse;min-width:560px;font-size:13px}
+.real-sets-table th,.real-sets-table td{padding:9px;border-bottom:1px solid #2b3b53;text-align:left}
+.real-sets-table th{color:#aac2d4;font-size:12px}
+</style>
 </head>
 <body>
 <div class="app">
@@ -97,7 +109,7 @@ function initialDB(){
     w=newWorkout(day(3),'run',m.id);w.title=plans[mi][0];
     if(mi===0){w.cardio.plannedDistance=5;w.cardio.plannedPace='6:30–7:00/km';}
     else if(mi===7){w.cardio.plannedDistance=2;w.cardio.plannedPace='4:30/km';}
-    else{const [_,dist,tt]=plans[mi];w.intervals=Array.from({length:nrep[mi]},()=>({id:id(),distance:dist,plannedTime:tt,actualTime:'',restSec:mi>=3?120:90}));}db.workouts.push(w);
+    else{const [_,dist,tt]=plans[mi];w.intervals=Array.from({length:nrep[mi]},()=>({id:id(),distance:dist,plannedTime:tt,actualTime:'',restAuto:true,restSec:recommendedRestSec(dist)}));}db.workouts.push(w);
     w=newWorkout(day(4),'swim',m.id);w.title='Piscina libre · técnica / 50 m';w.cardio.plannedDistance=500;db.workouts.push(w);
     w=newWorkout(day(5),'run',m.id);w.title='Carrera continua · Z2';w.cardio.plannedDistance=mi<2?7:mi<6?9:6;w.cardio.plannedPace=mi<2?'6:30–7:00/km':'6:15–6:45/km';db.workouts.push(w);
     w=newWorkout(day(6),'other',m.id);w.title='Descanso / movilidad';db.workouts.push(w);
@@ -242,17 +254,30 @@ function renderLeisureStats(){
 function calc(){
  let done=db.workouts.filter(w=>w.done),run=done.filter(w=>w.type==='run'),swim=done.filter(w=>w.type==='swim'),gym=done.filter(w=>w.type==='gym');
  let km=run.reduce((a,w)=>a+nz(w.cardio?.distance),0),meters=swim.reduce((a,w)=>a+swimMeters(w),0);
- let allSets=gym.flatMap(w=>(w.exercises||[]).flatMap(e=>(e.sets||[]).map(s=>({w,e,s}))));
+ // El volumen cuenta series reales GUARDADAS aunque la sesión siga en curso.
+ let allSets=db.workouts.filter(w=>w.type==='gym').flatMap(w=>(w.exercises||[]).flatMap(e=>(e.sets||[]).map(s=>({w,e,s}))));
  let volume=allSets.reduce((a,r)=>a+(nz(r.s.actualKg)>0&&nz(r.s.actualReps)>0?nz(r.s.actualKg)*nz(r.s.actualReps):0),0);
  let best2k=[...done.filter(w=>w.type==='test').map(w=>parseTime(w.tests?.run2k)),...run.filter(w=>Math.abs(nz(w.cardio?.distance)-2)<.02).map(w=>parseTime(w.cardio?.duration))].filter(x=>x>0).sort((a,b)=>a-b)[0]||null;
  return {done,run,swim,gym,km,meters,volume,best2k,allSets};
 }
-function gymRecords(){let records={};db.workouts.filter(w=>w.done&&w.type==='gym').forEach(w=>(w.exercises||[]).forEach(e=>{
- let key=e.name.toLocaleLowerCase('es').trim();if(!records[key])records[key]={name:e.name,sets:[],sessions:[]};
- let sets=(e.sets||[]).filter(s=>num(s.actualReps)!==null&&num(s.actualReps)>0).map(s=>{
- let kg=nz(s.actualKg),reps=nz(s.actualReps);return {...s,kg,reps,date:w.date,id:w.id,volume:kg*reps,e1rm:kg>0&&reps<=12?kg*(1+reps/30):null};
- });records[key].sets.push(...sets);if(sets.length)records[key].sessions.push({date:w.date,sets,id:w.id});
- }));return records;}
+function gymRecords(){
+ // Nunca usar plannedKg/plannedReps para récords. Incluye series guardadas en sesiones pendientes.
+ const records={};
+ db.workouts.filter(w=>w.type==='gym').forEach(w=>(w.exercises||[]).forEach(e=>{
+  const key=String(e.name||'').toLocaleLowerCase('es').trim();if(!key)return;
+  const sets=(e.sets||[]).flatMap((st,idx)=>{
+   const reps=num(st.actualReps);if(!(reps>0))return [];
+   const kg=num(st.actualKg),unit=e.unit||'reps';
+   return [{...st,kg,reps,unit,date:w.date,id:w.id,seriesIndex:idx+1,finished:!!w.done,
+    volume:kg>0?kg*reps:0,e1rm:unit==='reps'&&kg>0&&reps<=12?kg*(1+reps/30):null}];
+  });
+  if(!sets.length)return;
+  if(!records[key])records[key]={name:e.name,sets:[],sessions:[]};
+  records[key].sets.push(...sets);
+  records[key].sessions.push({date:w.date,sets,id:w.id});
+ }));
+ return records;
+}
 function testRecords(){
  let source=[];db.workouts.filter(w=>w.done&&w.type==='test').forEach(w=>{let t=w.tests||{};source.push({date:w.date,run2k:parseTime(t.run2k),pushups:num(t.pushups),plank:parseTime(t.plank),agility:parseTime(t.agility),swim50:parseTime(t.swim50)});});
  return source;
@@ -279,7 +304,11 @@ function renderPanel(){const m=getMeso(),c=calc(),all=m?workoutsByMeso(m):[],don
  const currentList=all.filter(w=>w.date>=addDays(m.start,weekIndex*7)&&w.date<=addDays(m.start,weekIndex*7+6)).sort((a,b)=>a.date.localeCompare(b.date));
  const upcoming=currentList.length?currentList:all.slice(0,7);
  const gymPending=db.workouts.filter(w=>w.type==='gym'&&!w.done&&w.date>=addDays(today(),-14)&&w.date<=addDays(today(),21)).sort((a,b)=>Math.abs(diffDays(today(),a.date))-Math.abs(diffDays(today(),b.date))||a.date.localeCompare(b.date));
- const recs=gymRecords(),pr=Object.values(recs).map(r=>({name:r.name,max:bestOf(r.sets.map(s=>s.kg),'max'),set:r.sets.sort((a,b)=>(b.e1rm||0)-(a.e1rm||0))[0]})).filter(x=>x.max!=null).sort((a,b)=>b.max-a.max);
+ const recs=gymRecords(),pr=Object.values(recs).map(r=>{
+  const loaded=r.sets.filter(s=>s.kg>0);
+  const set=loaded.sort((a,b)=>b.kg-a.kg||b.reps-a.reps||b.date.localeCompare(a.date))[0];
+  return {name:r.name,max:set?.kg??null,set};
+ }).filter(x=>x.max!=null).sort((a,b)=>b.max-a.max);
  return `<section class="card hero"><div class="eyebrow">Tu centro de entrenamiento · Plan SUB9</div><h1>Entrena, registra y descubre<br>cómo estás progresando.</h1><p>Mesociclos editables, sesiones por día, cargas de gimnasio, series de carrera, natación, pádel, caminatas y mejores marcas. Todo en un solo archivo.</p><div class="heroactions"><button class="primary" data-action="new-today">＋ Registrar sesión</button><button data-tab="calendario">Ver calendario semanal</button><button data-tab="estadisticas">Consultar récords</button><button data-tab="polar">♥ Datos Polar</button></div></section>
  <div class="kpis" style="margin:15px 0"><div class="card stat"><div class="k-label">Entrenos realizados</div><div class="k-value">${c.done.length}</div><div class="k-foot">Historial completo</div></div><div class="card stat"><div class="k-label">Kilómetros corriendo</div><div class="k-value">${fmtN(c.km,1)} <span style="font-size:15px;color:var(--muted)">km</span></div><div class="k-foot">Solo sesiones registradas</div></div><div class="card stat"><div class="k-label">Volumen de gimnasio</div><div class="k-value">${fmtN(c.volume,0)} <span style="font-size:15px;color:var(--muted)">kg</span></div><div class="k-foot">Suma kg × repeticiones</div></div><div class="card stat"><div class="k-label">Mejor test de 2 km</div><div class="k-value">${c.best2k?timeFmt(c.best2k):'—'}</div><div class="k-foot">${c.best2k?'Tu mejor marca registrada':'Referencia previa: 9:33 (sin importar)'}</div></div></div>
  <div class="card gymtodo"><div class="sectionhead"><div><h2>🏋 Tareas pendientes · Gimnasio</h2><div class="sub">Marca cada ejercicio cuando lo termines. Puedes guardar el entrenamiento a medias.</div></div><button class="small" data-tab="calendario">Ver calendario</button></div>
@@ -290,7 +319,7 @@ function renderPanel(){const m=getMeso(),c=calc(),all=m?workoutsByMeso(m):[],don
  <div class="borderline"></div><h3>Pruebas objetivo</h3><div class="grid2"><div><div class="meta">2 km</div><strong>&lt; ${esc(db.settings?.goal2k||'9:00')}</strong></div><div><div class="meta">Flexiones</div><strong>≥ 22</strong></div><div><div class="meta">Plancha</div><strong>≥ 52 s</strong></div><div><div class="meta">Agilidad</div><strong>≤ 14,6 s</strong></div><div><div class="meta">Natación 50 m</div><strong>&lt; 1:00</strong></div></div></div>
  <div class="card"><div class="sectionhead"><div><h2>Agenda de la semana</h2><div class="sub">Toca una actividad para modificar marcas, series o ritmos</div></div><button class="small" data-tab="calendario">Ver todo</button></div>
  ${upcoming.length?upcoming.map(w=>`<div class="listrow"><div style="min-width:0"><div class="meta">${fmtDay(w.date)} · <span class="taskflag ${sessionState(w).code}">${sessionState(w).label}</span></div><b style="display:block;overflow-wrap:anywhere">${esc(w.title)}</b><div class="meta">${esc(summary(w))}</div></div><button class="small" data-action="edit-workout" data-id="${esc(w.id)}">Abrir</button></div>`).join(''):`<div class="emptystate">Todavía no hay sesiones planificadas.</div>`}</div></div>
- <div class="two" style="margin-top:15px"><div class="card"><div class="sectionhead"><h2>Tus mejores cargas</h2><button class="small" data-tab="estadisticas">Más estadísticas</button></div>${pr.length?pr.slice(0,5).map(r=>`<div class="listrow"><div><b>${esc(r.name)}</b><div class="meta">${r.set?fmtDate(r.set.date):''}</div></div><strong class="numaccent">${fmtN(r.max)} kg</strong></div>`).join(''):`<div class="emptystate"><span class="big-icon">🏋</span>Cuando registres tus primeras series aquí aparecerán los récords de cada ejercicio.</div>`}</div>
+ <div class="two" style="margin-top:15px"><div class="card"><div class="sectionhead"><h2>Tus mejores cargas</h2><button class="small" data-tab="estadisticas">Más estadísticas</button></div><p class="help">Máximo peso <b>real anotado</b> por ejercicio, incluso en gimnasios guardados como «En curso». No cuentan los pesos previstos.</p>${pr.length?pr.slice(0,6).map(r=>`<div class="listrow"><div><b>${esc(r.name)}</b><div class="meta">${r.set?`${fmtDate(r.set.date)} · ${fmtN(r.set.reps,0)} ${r.set.unit==='s'?'s':'repeticiones'}${r.set.finished?'':' · sesión en curso'}`:''}</div></div><strong class="numaccent">${fmtN(r.max,1)} kg</strong></div>`).join(''):`<div class="emptystate"><span class="big-icon">🏋</span>No hay pesos reales guardados todavía. Abre el gimnasio, rellena «Real kg» y «Real reps» y pulsa «Guardar progreso».</div>`}</div>
  <div class="card"><h2>Tu punto de partida</h2><p class="help">Referencias orientativas de tu seguimiento anterior. No se cuentan como entrenamientos realizados ni como récords importados.</p><div class="record-grid"><div class="record"><div class="meta">Test 2 km</div><div class="value">9:33</div></div><div class="record"><div class="meta">Flexiones</div><div class="value">23</div></div><div class="record"><div class="meta">Plancha frontal</div><div class="value">1:13</div></div><div class="record"><div class="meta">Circuito agilidad</div><div class="value">14 s</div></div></div></div></div>`;
 }
 function renderCalendar(){const m=getMeso();if(!m)return `<div class="card">No tienes mesociclos. <button data-action="add-meso">Crear uno</button></div>`;
@@ -322,7 +351,7 @@ function planRowFromWorkout(w,day){
  const baseTime=first?parseTime(first.plannedTime):null;
  return {key:w.templateKey||id(),day,type:w.type,title:w.title||'',distance:num(w.cardio?.plannedDistance),pace:w.cardio?.plannedPace||'',
   reps:w.type==='run'?w.intervals?.length||0:0,meters,
-  targetPace:baseTime>0?formatPaceKm(baseTime*1000/meters):'',restSec:first?.restSec??90,
+  targetPace:baseTime>0?formatPaceKm(baseTime*1000/meters):'',restSec:first?.restSec??recommendedRestSec(meters),restAuto:first?autoRestEnabled(first):true,
   exercises:w.type==='gym'?clone(w.exercises||[]):[],drills:w.type==='swim'?clone(w.drills||[]):[],poolLength:w.poolLength||25,teacher:w.teacher||''};
 }
 function capturePlanFromWeek(m,wi){let rows=[];const start=addDays(m.start,wi*7),last=addDays(m.start,Math.min((wi+1)*7-1,diffDays(m.start,m.end)));
@@ -336,8 +365,26 @@ function ensurePlanDraft(){const m=getMeso();if(!m)return null;
  if(!editingWeekPlan||editingWeekPlanMesoId!==m.id){editingWeekPlan=m.weekPlan?clone(m.weekPlan):capturePlanFromWeek(m,0);editingWeekPlanMesoId=m.id;captureWeekIndex=0;}
  editingWeekPlan.rows??=[];editingWeekPlan.weekly??={};return editingWeekPlan;
 }
+// Recuperaciones orientativas para series del plan SUB9, no son tiempos obligatorios.
+function recommendedRestSec(m){const d=num(m);if(!(d>0))return 90;
+ if(d<=200)return 60;
+ if(d<=400)return 90;
+ if(d<=600)return 120;
+ if(d<=800)return 150;
+ if(d<=1000)return 180;
+ return 210;
+}
+function autoRestEnabled(entry){
+ if(entry?.restAuto===true)return true;
+ if(entry?.restAuto===false)return false;
+ // Compatibilidad: antiguos descansos que coinciden con la recomendación son automáticos.
+ return num(entry?.restSec)==null||num(entry.restSec)===recommendedRestSec(entry.meters??entry.distance);
+}
 function targetForWeek(row,wi){const rules=editingWeekPlan?.weekly?.[wi]?.[row.key]||{};
- return {reps:rules.reps??row.reps??0,meters:rules.meters??row.meters??400,pace:rules.pace??row.targetPace??'',restSec:rules.restSec??row.restSec??90};
+ const meters=rules.meters??row.meters??400;
+ const restAuto=rules.restAuto!==undefined?!!rules.restAuto:autoRestEnabled(row);
+ return {reps:rules.reps??row.reps??0,meters,pace:rules.pace??row.targetPace??'',restAuto,
+  restSec:restAuto?recommendedRestSec(meters):(rules.restSec??row.restSec??recommendedRestSec(meters))};
 }
 function planWidget(value,label,field,key,style='text',extra=''){
  return `<label class="plan-field">${esc(label)}<input type="${style}" data-plan-field="${field}" data-key="${esc(key)}" ${extra} value="${esc(value??'')}"></label>`;
@@ -346,12 +393,12 @@ function renderWeekPlanner(){const m=getMeso();if(!m)return '<div class="card">C
  const gridItems=p.rows.map(r=>{
  const typ=PLAN_TYPES.map(([v,n])=>`<option value="${v}" ${v===r.type?'selected':''}>${n}</option>`).join('');
  const days=Array.from({length:7},(_,i)=>`<option value="${i}" ${r.day===i?'selected':''}>${weekDays[(asDate(m.start).getDay()+6+i)%7]}</option>`).join('');
- const series=r.type==='run'?`<div class="plan-series-mini">${planWidget(r.reps,'Series base','reps',r.key,'number','min="0" max="40" step="1"')}${planWidget(r.meters,'Metros/serie','meters',r.key,'number','min="1" max="10000" step="1"')}${planWidget(r.targetPace,'Ritmo base/km','targetPace',r.key,'text','placeholder="4:30"')}${planWidget(r.restSec,'Recup. (s)','restSec',r.key,'number','min="0" max="1800" step="5"')}</div>`:'';
+ const series=r.type==='run'?`<div class="plan-series-mini">${planWidget(r.reps,'Series base','reps',r.key,'number','min="0" max="40" step="1"')}${planWidget(r.meters,'Metros/serie','meters',r.key,'number','min="1" max="10000" step="1"')}${planWidget(r.targetPace,'Ritmo base/km','targetPace',r.key,'text','placeholder="4:30"')}${planWidget(autoRestEnabled(r)?recommendedRestSec(r.meters):r.restSec,'Recup. base (s)','restSec',r.key,'number','min="0" max="1800" step="5"')}<label class="rest-auto-check"><input type="checkbox" data-plan-field="restAuto" data-key="${esc(r.key)}" ${autoRestEnabled(r)?'checked':''}> Auto según metros</label></div>`:'';
  const descriptor=r.type==='padel'?'<span class="chip">Duración y pulso opcionales · Polar</span>':r.type==='walk'?'<span class="chip">Distancia y ritmo al importar Polar</span>':r.type==='gym'?`<span class="chip">${(r.exercises||[]).length} ejercicios de fuerza de la semana origen</span>`:r.type==='swim'?'<span class="chip">Ejercicios del profesor opcionales</span>':'';
  return `<div class="plan-row" data-key="${esc(r.key)}"><div class="plan-row-top"><select aria-label="Día" data-plan-field="day" data-key="${esc(r.key)}">${days}</select><select aria-label="Actividad" data-plan-field="type" data-key="${esc(r.key)}">${typ}</select><input aria-label="Título" data-plan-field="title" data-key="${esc(r.key)}" value="${esc(r.title)}" placeholder="Nombre de la sesión"><button class="small danger" type="button" data-action="weekplan-remove" data-key="${esc(r.key)}">Quitar</button></div><div class="plan-series-mini">${r.type==='padel'?'<span class="chip">Sin distancia objetivo obligatoria</span>':planWidget(r.distance,r.type==='swim'?'Metros previstos':['run','walk'].includes(r.type)?'Km previstos':'Objetivo (opcional)','distance',r.key,'number','min="0" step="0.1"')}${r.type==='padel'?'':planWidget(r.pace,'Ritmo continuo/km','pace',r.key,'text','placeholder="6:40"')}</div>${series}${descriptor}</div>`;
  }).join('');
  const running=p.rows.filter(r=>r.type==='run');
- const progression=running.length?running.map(r=>`<div class="card" style="margin-bottom:12px"><h3>${esc(r.title)} <span class="muted">· ${weekDays[(asDate(m.start).getDay()+6+r.day)%7]}</span></h3><p class="help">Elige una distancia y un ritmo diferentes en cada semana. La aplicación calculará el tiempo objetivo de cada repetición.</p><div class="table-scroll"><table class="week-targets"><thead><tr><th>Semana</th><th>Series</th><th>Metros por serie</th><th>Ritmo min/km</th><th>Descanso s</th><th>Tiempo objetivo</th></tr></thead><tbody>${Array.from({length:numWeeks},(_,wi)=>{let t=targetForWeek(r,wi),ti=paceSeconds(t.pace);const duration=t.reps>0&&ti&&t.meters>0?timeFmt(t.meters*ti/1000):'—';return `<tr><th>S${wi+1}<small>${fmtDate(addDays(m.start,wi*7))}</small></th>${['reps','meters','pace','restSec'].map((k)=>`<td><input aria-label="Semana ${wi+1} ${k}" data-week-field="${k}" data-wi="${wi}" data-key="${esc(r.key)}" type="${k==='pace'?'text':'number'}" min="0" step="${k==='restSec'?5:1}" value="${esc(t[k]??'')}"></td>`).join('')}<td class="week-expected">${duration}</td></tr>`}).join('')}</tbody></table></div></div>`).join(''):'<div class="inline-note">Añade una actividad de carrera para configurar series semanales.</div>';
+ const progression=running.length?running.map(r=>`<div class="card" style="margin-bottom:12px"><h3>${esc(r.title)} <span class="muted">· ${weekDays[(asDate(m.start).getDay()+6+r.day)%7]}</span></h3><p class="help">Elige metros y ritmo para cada semana. «Auto» propone el descanso según la distancia (400 m: 90 s · 500–600 m: 120 s · 800 m: 150 s · 1.000 m: 180 s). Al escribir un descanso distinto se desactiva Auto para esa semana.</p><div class="table-scroll"><table class="week-targets"><thead><tr><th>Semana</th><th>Series</th><th>Metros por serie</th><th>Ritmo min/km</th><th>Descanso s</th><th>Auto</th><th>Tiempo objetivo</th></tr></thead><tbody>${Array.from({length:numWeeks},(_,wi)=>{let t=targetForWeek(r,wi),ti=paceSeconds(t.pace);const duration=t.reps>0&&ti&&t.meters>0?timeFmt(t.meters*ti/1000):'—';return `<tr><th>S${wi+1}<small>${fmtDate(addDays(m.start,wi*7))}</small></th>${['reps','meters','pace','restSec'].map((k)=>`<td><input aria-label="Semana ${wi+1} ${k}" data-week-field="${k}" data-wi="${wi}" data-key="${esc(r.key)}" type="${k==='pace'?'text':'number'}" min="0" step="${k==='restSec'?5:1}" value="${esc(t[k]??'')}"></td>`).join('')}<td><label class="rest-auto-check"><input type="checkbox" data-week-field="restAuto" data-wi="${wi}" data-key="${esc(r.key)}" ${t.restAuto?'checked':''}> Auto</label></td><td class="week-expected">${duration}</td></tr>`}).join('')}</tbody></table></div></div>`).join(''):'<div class="inline-note">Añade una actividad de carrera para configurar series semanales.</div>';
  return `${drawHead('Semana tipo y progresión','Diseña cada mesociclo por separado. Define la semana base y personaliza los intervalos de cada semana.',`<button class="small soft" data-tab="calendario">← Calendario</button>`)}
  <div id="weekPlanView"><div class="card"><div class="grid2"><div><label>Mesociclo</label><select id="weekPlanMeso">${db.mesocycles.map(x=>`<option value="${esc(x.id)}" ${x.id===m.id?'selected':''}>${esc(x.title)}</option>`).join('')}</select></div><div><label>Fechas</label><div class="plan-period">${fmtDate(m.start)} — ${fmtDate(m.end)} · ${numWeeks} semanas</div></div></div><div class="inline-note">Puedes editar la distribución directamente aquí, o modificar los ejercicios detallados en el calendario y después <b>capturar esa semana</b>. Las sesiones realizadas y las lecturas Polar no se sustituyen.</div><div class="row" style="margin-top:12px"><label style="margin:0">Tomar una semana existente como base: <select id="weekCaptureSelect">${Array.from({length:numWeeks},(_,i)=>`<option value="${i}" ${captureWeekIndex===i?'selected':''}>Semana ${i+1}</option>`).join('')}</select></label><button class="soft small" data-action="weekplan-capture">Usar esta semana como plantilla</button></div></div>
  <div class="sectionhead"><h3>1 · Actividades que se repiten cada semana</h3><button class="small soft" type="button" data-action="weekplan-add">＋ Añadir actividad</button></div><div class="card" style="margin-bottom:16px">${gridItems||'<div class="emptystate">No hay actividades. Pulsa «Añadir actividad» para empezar.</div>'}<button class="small soft" type="button" data-action="weekplan-add">＋ Añadir actividad</button></div>
@@ -359,14 +406,47 @@ function renderWeekPlanner(){const m=getMeso();if(!m)return '<div class="card">C
  <div class="card plan-sticky-actions"><p class="help">Guardar la plantilla no modifica el calendario. <b>Guardar y aplicar</b> crea o actualiza las sesiones pendientes de este mesociclo; no altera entrenamientos realizados ni series reales.</p><div class="row"><button type="button" class="soft" data-action="weekplan-save">Guardar plantilla</button><button type="button" class="primary" data-action="weekplan-apply">✓ Guardar y aplicar a las semanas pendientes</button></div></div></div>`;
 }
 function planFieldChange(el){const p=ensurePlanDraft();if(!p)return;
- const key=el.dataset.key;const field=el.dataset.planField,weekField=el.dataset.weekField;
- if(field){const row=p.rows.find(x=>x.key===key);if(!row)return;const oldType=row.type,oldTitle=row.title;row[field]=['day','reps','meters','restSec','distance'].includes(field)?num(el.value):el.value;if(field==='day')row.day=Math.max(0,Math.min(6,Math.round(row.day||0)));if(field==='type'){const genericTitles=['Movilidad / Descanso','Descanso / movilidad','Otro / recuperación','Natación','Piscina','Gimnasio','Carrera','Caminata','Pádel'];if(genericTitles.includes(oldTitle)||oldTitle===typeLabel(oldType))row.title=({gym:'Gimnasio · fuerza',run:'Carrera',swim:'Natación',walk:'Caminata',padel:'Pádel',test:'Pruebas físicas',other:'Descanso / movilidad'})[row.type]||oldTitle;render();}}
- if(weekField){const wi=Number(el.dataset.wi);p.weekly[wi]??={};p.weekly[wi][key]??={};p.weekly[wi][key][weekField]=weekField==='pace'?el.value:num(el.value);
-  const tr=el.closest('tr'),row=p.rows.find(x=>x.key===key);if(tr&&row){const t=targetForWeek(row,wi),pace=paceSeconds(t.pace);const v=t.reps>0&&pace&&t.meters>0?timeFmt(t.meters*pace/1000):'—';const td=tr.querySelector('.week-expected');if(td)td.textContent=v;}
+ const key=el.dataset.key,field=el.dataset.planField,weekField=el.dataset.weekField;
+ if(field){
+  const row=p.rows.find(x=>x.key===key);if(!row)return;
+  const oldType=row.type,oldTitle=row.title,previousAuto=autoRestEnabled(row);
+  if(field==='restAuto')row.restAuto=el.checked;
+  else row[field]=['day','reps','meters','restSec','distance'].includes(field)?num(el.value):el.value;
+  if(field==='day')row.day=Math.max(0,Math.min(6,Math.round(row.day||0)));
+  if(field==='restSec'){
+   row.restAuto=false;
+   const toggle=el.closest('.plan-series-mini')?.querySelector('[data-plan-field="restAuto"]');if(toggle)toggle.checked=false;
+  }
+  if((field==='meters'&&previousAuto)||(field==='restAuto'&&row.restAuto)){
+   row.restAuto=true;row.restSec=recommendedRestSec(row.meters);
+   const rest=el.closest('.plan-series-mini')?.querySelector('[data-plan-field="restSec"]');if(rest)rest.value=row.restSec;
+  }
+  if(field==='type'){
+   const genericTitles=['Movilidad / Descanso','Descanso / movilidad','Otro / recuperación','Natación','Piscina','Gimnasio','Carrera','Caminata','Pádel'];
+   if(genericTitles.includes(oldTitle)||oldTitle===typeLabel(oldType))row.title=({gym:'Gimnasio · fuerza',run:'Carrera',swim:'Natación',walk:'Caminata',padel:'Pádel',test:'Pruebas físicas',other:'Descanso / movilidad'})[row.type]||oldTitle;
+   render();
+  }
+ }
+ if(weekField){
+  const wi=Number(el.dataset.wi);p.weekly[wi]??={};p.weekly[wi][key]??={};
+  const rules=p.weekly[wi][key],row=p.rows.find(x=>x.key===key);
+  if(!row)return;
+  const before=targetForWeek(row,wi);
+  rules[weekField]=weekField==='pace'?el.value:weekField==='restAuto'?el.checked:num(el.value);
+  if(weekField==='restSec'){rules.restAuto=false;
+   const toggle=el.closest('tr')?.querySelector('[data-week-field="restAuto"]');if(toggle)toggle.checked=false;
+  }
+  if((weekField==='meters'&&before.restAuto)||(weekField==='restAuto'&&rules.restAuto)){rules.restAuto=true;rules.restSec=recommendedRestSec(targetForWeek(row,wi).meters);}
+  const tr=el.closest('tr'),t=targetForWeek(row,wi);
+  if(tr){
+   const pace=paceSeconds(t.pace),duration=t.reps>0&&pace&&t.meters>0?timeFmt(t.meters*pace/1000):'—';
+   const expected=tr.querySelector('.week-expected');if(expected)expected.textContent=duration;
+   const rest=tr.querySelector('[data-week-field="restSec"]');if(rest&&t.restAuto)rest.value=t.restSec;
+  }
  }
 }
 function planAddRow(){const m=getMeso(),p=ensurePlanDraft();if(!m||!p)return;
- p.rows.push({key:id(),day:0,type:'other',title:'Movilidad / Descanso',distance:null,pace:'',reps:0,meters:400,targetPace:'',restSec:90,exercises:[],drills:[],poolLength:25,teacher:''});render();}
+ p.rows.push({key:id(),day:0,type:'other',title:'Movilidad / Descanso',distance:null,pace:'',reps:0,meters:400,targetPace:'',restSec:90,restAuto:true,exercises:[],drills:[],poolLength:25,teacher:''});render();}
 function planRemoveRow(key){const p=ensurePlanDraft();if(!p)return;const old=p.rows.find(x=>x.key===key);if(!old)return;
  if(!confirm('¿Quitar '+old.title+' de la semana tipo? Los entrenamientos ya realizados no se borrarán.'))return;
  p.rows=p.rows.filter(x=>x.key!==key);for(let rules of Object.values(p.weekly))delete rules[key];render();}
@@ -383,7 +463,7 @@ function workoutFromPlan(row,date,m,wi){const w=newWorkout(date,row.type,m.id);w
  if(row.type==='gym'&&Array.isArray(row.exercises)&&row.exercises.length)w.exercises=clone(row.exercises).map(ex=>({...ex,id:id(),completed:false,sets:(ex.sets||[]).map(st=>({...st,actualKg:null,actualReps:null,rir:null}))}));
  if(row.type==='swim'){w.poolLength=row.poolLength||25;w.teacher=row.teacher||'';w.drills=clone(row.drills||[]).map(d=>({...d,id:id(),completed:false,distanceActual:null,time:''}));}
  if(row.type==='run'){let targets=targetForWeek(row,wi),reps=Math.max(0,Math.min(40,Math.round(num(targets.reps)||0))),metres=num(targets.meters)||400,pace=paceSeconds(targets.pace);
-  w.intervals=Array.from({length:reps},()=>({id:id(),distance:metres,plannedTime:pace?timeFmt(pace*metres/1000):'',actualTime:'',actualDistance:null,restSec:num(targets.restSec)||0}));
+  w.intervals=Array.from({length:reps},()=>({id:id(),distance:metres,plannedTime:pace?timeFmt(pace*metres/1000):'',actualTime:'',actualDistance:null,restAuto:targets.restAuto,restSec:num(targets.restSec)??recommendedRestSec(metres)}));
   if(reps>0){let baseTitle=row.title||'Series de carrera';w.title=/^\d+\s*[×x]\s*\d+\s*m\b/i.test(baseTitle)?baseTitle.replace(/^\d+\s*[×x]\s*\d+\s*m\b/i,`${reps} × ${metres} m`):`${reps} × ${metres} m · ${baseTitle}`;w.cardio.plannedPace=targets.pace?targets.pace+'/km':'';}
  }
  return w;
@@ -444,16 +524,18 @@ function lineChart(data,unit='',invert=false){
 }
 function renderStats(){let c=calc(),rec=gymRecords(),keys=Object.keys(rec).sort(),key=statExercise.toLowerCase();if(!rec[key]&&keys.length){key=keys[0];statExercise=rec[key].name}let selected=rec[key];
  let selectedSets=selected?.sets||[],maxKg=bestOf(selectedSets.map(s=>s.kg),'max'),maxE1rm=bestOf(selectedSets.map(s=>s.e1rm),'max');
- let gymChart=selected?selected.sessions.map(ss=>({date:ss.date,y:Math.max(...ss.sets.map(s=>s.e1rm||0))})).filter(x=>x.y>0).sort((a,b)=>a.date.localeCompare(b.date)):[];
+ let gymChart=selected?selected.sessions.map(ss=>({date:ss.date,y:Math.max(0,...ss.sets.map(s=>s.e1rm||0))})).filter(x=>x.y>0).sort((a,b)=>a.date.localeCompare(b.date)):[];
  let runners=c.run.filter(w=>nz(w.cardio?.distance)>0&&parseTime(w.cardio?.duration)>0).sort((a,b)=>a.date.localeCompare(b.date));let paceData=runners.map(w=>({date:w.date,y:parseTime(w.cardio.duration)/nz(w.cardio.distance)/60}));
  let zones={Z1:0,Z2:0,Z3:0,Z4:0,Z5:0,Z6:0};c.run.forEach(w=>Object.keys(zones).forEach(z=>zones[z]+=nz(w.cardio?.zoneMins?.[z])));
  let zoneTotal=Object.values(zones).reduce((a,b)=>a+b,0);let tests=testRecords();let bests={run2k:bestOf(tests.map(t=>t.run2k).concat(c.run.filter(w=>Math.abs(nz(w.cardio?.distance)-2)<.02).map(w=>parseTime(w.cardio?.duration))),'min'),pushups:bestOf(tests.map(t=>t.pushups),'max'),plank:bestOf(tests.map(t=>t.plank),'max'),agility:bestOf(tests.map(t=>t.agility),'min'),swim50:bestOf(tests.map(t=>t.swim50),'min')};
  let ivals=c.run.flatMap(w=>(w.intervals||[]).map(s=>({...s,date:w.date,secs:parseTime(s.actualTime)}))).filter(x=>x.distance>0&&x.secs>0);let ivalGroups={};ivals.forEach(s=>{let k=s.distance; if(!ivalGroups[k]||s.secs<ivalGroups[k].secs)ivalGroups[k]=s});
- let topExercise=selectedSets.length?selectedSets.reduce((a,b)=>(b.e1rm||0)>(a.e1rm||0)?b:a):null;
+ let topExercise=[...selectedSets].filter(s=>s.e1rm!=null).sort((a,b)=>b.e1rm-a.e1rm)[0]||[...selectedSets].filter(s=>s.kg>0).sort((a,b)=>b.kg-a.kg)[0]||null;
+ let gymWithData=db.workouts.filter(w=>w.type==='gym'&&(w.exercises||[]).some(e=>(e.sets||[]).some(st=>num(st.actualReps)>0)));
  return `${drawHead('Estadísticas y récords','Se calculan únicamente con los datos reales que registres.')}
- <div class="kpis" style="margin-bottom:15px"><div class="card stat"><div class="k-label">Sesiones finalizadas</div><div class="k-value">${c.done.length}</div><div class="k-foot">En total</div></div><div class="card stat"><div class="k-label">Carrera</div><div class="k-value">${fmtN(c.km,1)} <span style="font-size:15px">km</span></div><div class="k-foot">${c.run.length} entrenamientos</div></div><div class="card stat"><div class="k-label">Natación</div><div class="k-value">${fmtN(c.meters,0)} <span style="font-size:15px">m</span></div><div class="k-foot">${c.swim.length} entrenamientos</div></div><div class="card stat"><div class="k-label">Volumen fuerza</div><div class="k-value">${fmtN(c.volume,0)} <span style="font-size:15px">kg</span></div><div class="k-foot">${c.gym.length} sesiones</div></div></div>
- <div class="two"><div class="card"><div class="sectionhead"><div><h2>Progresión por ejercicio</h2><div class="sub">Estimación de 1RM con Epley (solo series de hasta 12 repeticiones)</div></div></div><label>Ejercicio</label><select id="statExercise">${keys.length?keys.map(k=>`<option value="${esc(rec[k].name)}" ${k===key?'selected':''}>${esc(rec[k].name)}</option>`).join(''):`<option value="">Todavía no hay series</option>`}</select><div class="grid2" style="margin-top:15px"><div class="record"><div class="meta">Mayor peso en una serie</div><div class="value">${maxKg===null?'—':fmtN(maxKg)+' kg'}</div></div><div class="record"><div class="meta">Mejor 1RM estimado</div><div class="value">${maxE1rm===null?'—':fmtN(maxE1rm)+' kg'}</div></div></div>${lineChart(gymChart,'kg')}
- ${topExercise?`<div class="inline-note">Mejor serie estimada: ${fmtN(topExercise.kg)} kg × ${topExercise.reps} rep. · ${fmtDate(topExercise.date)}</div>`:''}</div>
+ <div class="kpis" style="margin-bottom:15px"><div class="card stat"><div class="k-label">Sesiones finalizadas</div><div class="k-value">${c.done.length}</div><div class="k-foot">En total</div></div><div class="card stat"><div class="k-label">Carrera</div><div class="k-value">${fmtN(c.km,1)} <span style="font-size:15px">km</span></div><div class="k-foot">${c.run.length} entrenamientos</div></div><div class="card stat"><div class="k-label">Natación</div><div class="k-value">${fmtN(c.meters,0)} <span style="font-size:15px">m</span></div><div class="k-foot">${c.swim.length} entrenamientos</div></div><div class="card stat"><div class="k-label">Volumen fuerza</div><div class="k-value">${fmtN(c.volume,0)} <span style="font-size:15px">kg</span></div><div class="k-foot">${gymWithData.length} sesiones con series reales</div></div></div>
+ <div class="two"><div class="card"><div class="sectionhead"><div><h2>Progresión por ejercicio</h2><div class="sub">Incluye tus series reales guardadas, aunque el gimnasio siga pendiente. 1RM estimado con Epley (solo cargas en kg y hasta 12 repeticiones).</div></div></div><label>Ejercicio</label><select id="statExercise">${keys.length?keys.map(k=>`<option value="${esc(rec[k].name)}" ${k===key?'selected':''}>${esc(rec[k].name)}</option>`).join(''):`<option value="">Todavía no hay series</option>`}</select><div class="grid2" style="margin-top:15px"><div class="record"><div class="meta">Mayor peso en una serie</div><div class="value">${maxKg===null?'—':fmtN(maxKg)+' kg'}</div></div><div class="record"><div class="meta">Mejor 1RM estimado</div><div class="value">${maxE1rm===null?'—':fmtN(maxE1rm)+' kg'}</div></div></div>${lineChart(gymChart,'kg')}
+ ${topExercise?`<div class="inline-note">${topExercise.e1rm!=null?'Mejor serie por 1RM estimado':'Serie con mayor carga'}: ${fmtN(topExercise.kg,1)} kg × ${topExercise.reps} rep. · ${fmtDate(topExercise.date)}${topExercise.finished?'':' · sesión aún en curso'}</div>`:''}
+ <h3 style="margin-top:15px">Series reales guardadas</h3>${selectedSets.length?`<div class="table-scroll"><table class="real-sets-table"><thead><tr><th>Fecha</th><th>Serie</th><th>Peso real</th><th>Rep. reales</th><th>RIR</th><th>Estado</th></tr></thead><tbody>${[...selectedSets].sort((a,b)=>b.date.localeCompare(a.date)||a.seriesIndex-b.seriesIndex).slice(0,30).map(st=>`<tr><td>${fmtDate(st.date)}</td><td>${st.seriesIndex}</td><td>${st.kg>0?fmtN(st.kg,1)+' kg':'—'}</td><td>${fmtN(st.reps,0)}${st.unit==='s'?' s':''}</td><td>${st.rir??'—'}</td><td>${st.finished?'Finalizada':'En curso'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="help">Guarda al menos una serie en «Real kg» y «Real reps» para ver las marcas.</p>'}</div>
  <div class="card"><h2>Progreso de carrera</h2><p class="help">Ritmo medio (min/km) en los entrenamientos registrados. Un valor inferior significa mayor velocidad, aunque cada tipo de sesión puede ser distinto.</p>${lineChart(paceData,'min/km')}
  <h3>Tiempo en zonas</h3>${zoneTotal?Object.entries(zones).map(([z,v])=>`<div class="barline"><div class="label">${z}</div><div class="track"><i style="width:${v/zoneTotal*100}%"></i></div><div class="amount">${fmtN(v,0)} min</div></div>`).join(''):`<div class="emptystate">Introduce los minutos de Z1 a Z6 en tus sesiones de carrera para ver la distribución.</div>`}</div></div>
  <div class="two" style="margin-top:15px"><div class="card"><h2>Récords en pruebas físicas</h2><div class="record-grid" style="margin-top:12px"><div class="record"><div class="subject">2 km</div><div class="value">${bests.run2k?timeFmt(bests.run2k):'—'}</div><small>Menor tiempo</small></div><div class="record"><div class="subject">Flexiones</div><div class="value">${bests.pushups??'—'}</div><small>Máximo repeticiones</small></div><div class="record"><div class="subject">Plancha</div><div class="value">${bests.plank?timeFmt(bests.plank):'—'}</div><small>Mayor duración</small></div><div class="record"><div class="subject">Agilidad</div><div class="value">${bests.agility!=null?fmtN(bests.agility,1)+' s':'—'}</div><small>Menor tiempo</small></div><div class="record"><div class="subject">50 m natación</div><div class="value">${bests.swim50?timeFmt(bests.swim50):'—'}</div><small>Menor tiempo</small></div></div></div>
@@ -570,8 +652,8 @@ function renderRun(){const c=draft.cardio||{},intervals=draft.intervals||[];
  let zone=Object.entries(c.zoneMins||{Z1:null,Z2:null,Z3:null,Z4:null,Z5:null,Z6:null}).map(([z,v])=>field(z+' (min)','cardio.zoneMins.'+z,v,'number','min="0" step="0.1"')).join('');
  return `${paceBadge}<div class="grid3">${field('Distancia prevista (km)','cardio.plannedDistance',c.plannedDistance,'number','min="0" step="0.01"')}${field('Ritmo objetivo (min/km)','cardio.plannedPace',c.plannedPace,'text','placeholder="4:30/km"')}${field('Distancia real (km)','cardio.distance',c.distance,'number','min="0" step="0.01"')}${field('Tiempo real (mm:ss o hh:mm:ss)','cardio.duration',c.duration,'text','placeholder="38:29"')}${field('FC media (ppm)','cardio.avgHr',c.avgHr,'number','min="0" max="240"')}${field('FC máxima (ppm)','cardio.maxHr',c.maxHr,'number','min="0" max="240"')}</div>
  <div class="borderline"></div><div class="sectionhead"><h3>Series / intervalos</h3><button type="button" class="soft small" data-action="add-interval">＋ Serie</button></div>
- <div class="help">Cada serie tiene metros y tiempo objetivo propios. El ritmo se calcula por repetición; cuando Polar facilita vueltas, la importación puede completar los valores reales automáticamente.</div>${polarLapInfo}
- ${intervals.length?`<div class="table-scroll"><div style="min-width:700px;margin-top:10px">${intervals.map((s,i)=>`<div class="interval"><b>${i+1}.</b>${field('Metros','intervals.'+i+'.distance',s.distance,'number','min="0" step="1"')}${field('Objetivo','intervals.'+i+'.plannedTime',s.plannedTime,'text','placeholder="1:50"')}${field('Real','intervals.'+i+'.actualTime',s.actualTime,'text','placeholder="1:46"')}${field('Real m','intervals.'+i+'.actualDistance',s.actualDistance,'number','min="0" step="0.1"')}${field('Rec. (s)','intervals.'+i+'.restSec',s.restSec,'number','min="0" step="5"')}<button type="button" class="danger small icononly" data-action="remove-interval" data-i="${i}" aria-label="Eliminar serie">×</button></div>`).join('')}</div></div>`:'<div class="help" style="margin:12px 0">Sin series configuradas. Puedes registrar una carrera continua solamente con distancia y tiempo.</div>'}
+ <div class="help">Cada serie tiene metros y tiempo objetivo propios. El ritmo se calcula por repetición; cuando Polar facilita vueltas, la importación puede completar los valores reales automáticamente. <b>Descanso automático orientativo:</b> 200 m → 60 s, 400 m → 90 s, 500–600 m → 120 s, 800 m → 150 s y 1.000 m → 180 s. Puedes desactivar «Auto» y cambiarlo.</div>${polarLapInfo}
+ ${intervals.length?`<div class="table-scroll"><div style="min-width:700px;margin-top:10px">${intervals.map((s,i)=>`<div class="interval"><b>${i+1}.</b>${field('Metros','intervals.'+i+'.distance',s.distance,'number','min="0" step="1"')}${field('Objetivo','intervals.'+i+'.plannedTime',s.plannedTime,'text','placeholder="1:50"')}${field('Real','intervals.'+i+'.actualTime',s.actualTime,'text','placeholder="1:46"')}${field('Real m','intervals.'+i+'.actualDistance',s.actualDistance,'number','min="0" step="0.1"')}<div class="interval-rest">${field('Rec. (s)','intervals.'+i+'.restSec',autoRestEnabled(s)?recommendedRestSec(s.distance):s.restSec,'number','min="0" step="5"')}<label class="rest-auto-check"><input type="checkbox" data-path="intervals.${i}.restAuto" ${autoRestEnabled(s)?'checked':''}> Auto</label></div><button type="button" class="danger small icononly" data-action="remove-interval" data-i="${i}" aria-label="Eliminar serie">×</button></div>`).join('')}</div></div>`:'<div class="help" style="margin:12px 0">Sin series configuradas. Puedes registrar una carrera continua solamente con distancia y tiempo.</div>'}
  <div class="borderline"></div><h3>Tiempo por zonas cardíacas</h3><div class="grid3">${zone}</div><p class="help">Introduce minutos, no porcentajes. Las zonas se acumulan para obtener estadísticas de carga aeróbica.</p>`;
 }
 function renderSwim(){const c=draft.cardio||{},pool=nz(draft.poolLength)||25,drills=draft.drills||[];
@@ -621,7 +703,21 @@ function handleFormChange(el){
  let path=el.dataset.path;let value=el.type==='checkbox'?el.checked:el.type==='number'?num(el.value):el.value;
  if(modalMode==='workout'){
   if(path==='type'&&value!==draft.type){let keep={date:draft.date,note:draft.note,wellbeing:draft.wellbeing};let updated=newWorkout(draft.date,value,mesoByDate(draft.date)?.id||null);updated.id=draft.id;updated.date=keep.date;updated.wellbeing=keep.wellbeing;updated.note=keep.note;updated.done=draft.done;draft=updated;renderWorkoutModal();return;}
+  let intervalMatch=path.match(/^intervals\.(\d+)\.(distance|restSec|restAuto)$/);
+  let iv=intervalMatch?draft.intervals?.[Number(intervalMatch[1])]:null;
+  const priorAuto=iv?autoRestEnabled(iv):false;
   setNested(draft,path,value);
+  if(iv){
+   const prop=intervalMatch[2],idx=Number(intervalMatch[1]);
+   if(prop==='restSec'){iv.restAuto=false;
+    const check=$('modalContent')?.querySelector(`[data-path="intervals.${idx}.restAuto"]`);if(check)check.checked=false;
+   }
+   if((prop==='distance'&&priorAuto)||(prop==='restAuto'&&iv.restAuto)){
+    iv.restAuto=true;iv.restSec=recommendedRestSec(iv.distance);
+    const rest=$('modalContent')?.querySelector(`[data-path="intervals.${idx}.restSec"]`);if(rest)rest.value=iv.restSec;
+   }
+   if(prop==='restAuto'){renderWorkoutModal();return;}
+  }
   if(el.type==='checkbox'&&/^(exercises|drills)\.\d+\.completed$/.test(path)){renderWorkoutModal();return;}
  }else if(modalMode==='meso'){setNested(editingMeso,path,value)}else if(modalMode==='polar'){setNested(editingPolar,path,value)}else if(modalMode==='body'){setNested(editingBody,path,value)}
 }
@@ -1145,7 +1241,7 @@ document.addEventListener('click',e=>{
  case 'remove-set':if(draft?.exercises?.[i]?.sets?.length>1){draft.exercises[i].sets.splice(j,1);renderWorkoutModal()}else toast('Un ejercicio debe tener al menos una serie.',true);break;
  case 'copy-gym-ex':if(draft?.exercises?.[i]){draft.exercises[i].sets.forEach(s=>{s.actualKg=s.plannedKg;s.actualReps=s.plannedReps});renderWorkoutModal();}break;
  case 'copy-gym-all':if(draft?.type==='gym'){draft.exercises.forEach(ex=>ex.sets.forEach(s=>{s.actualKg=s.plannedKg;s.actualReps=s.plannedReps}));renderWorkoutModal();}break;
- case 'add-interval':if(draft){draft.intervals.push({id:id(),distance:400,plannedTime:'',actualTime:'',restSec:90});renderWorkoutModal()}break;
+ case 'add-interval':if(draft){draft.intervals.push({id:id(),distance:400,plannedTime:'',actualTime:'',actualDistance:null,restAuto:true,restSec:recommendedRestSec(400)});renderWorkoutModal()}break;
  case 'remove-interval':if(draft){draft.intervals.splice(i,1);renderWorkoutModal()}break;
  case 'add-drill':if(draft){draft.drills??=[];draft.drills.push(newDrill('',null));renderWorkoutModal()}break;
  case 'remove-drill':if(draft){draft.drills.splice(i,1);renderWorkoutModal()}break;
