@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1423">
-<title>ENTRENA SUB9 v3.2 · Polar Flow y actividad</title>
+<title>ENTRENA SUB9 v3.3 · Tareas y Polar</title>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -107,12 +107,46 @@ const workoutsByDate=(d)=>db.workouts.filter(w=>w.date===d).sort((a,b)=>typeOrde
 const typeOrder=t=>['swim','gym','run','test','other'].indexOf(t);
 const typeLabel=t=>({gym:'Gimnasio',run:'Carrera',swim:'Natación',test:'Pruebas físicas',other:'Otro / recuperación'})[t]||t;
 const typeIcon=t=>({gym:'🏋',run:'🏃',swim:'🏊',test:'🎯',other:'🌿'})[t]||'•';
+
+// Estado de las tareas. Un registro de Polar completa la sesión de natación o carrera;
+// el gimnasio conserva una casilla por ejercicio sin obligar a rellenar kilos.
+function recordedGymSeries(ex){return (ex.sets||[]).filter(st=>num(st.actualReps)!==null).length;}
+function gymExerciseDone(ex){
+ if(ex.completed===true)return true;
+ if(ex.completed===false)return false;
+ const sets=ex.sets||[];
+ return sets.length>0 && sets.every(st=>num(st.actualReps)!==null);
+}
+function gymProgress(w){const exercises=w.exercises||[];const total=exercises.length;const done=exercises.filter(gymExerciseDone).length;return {done,total,all:total>0&&done===total};}
+function swimDrillDone(d){return d.completed===true||(d.completed!==false&&num(d.distanceActual)!==null&&num(d.distanceActual)>0);}
+function swimProgress(w){const drills=w.drills||[];return {done:drills.filter(swimDrillDone).length,total:drills.length};}
+function sessionState(w){
+ if(w.done)return {code:'done',label:w.polarSourceId?'✓ Hecha · Polar':'✓ Hecha'};
+ if(w.type==='gym'&&gymProgress(w).done>0)return {code:'progress',label:'◐ En curso'};
+ if(w.type==='swim'&&swimProgress(w).done>0)return {code:'progress',label:'◐ En curso'};
+ return {code:'pending',label:'○ Pendiente'};
+}
+function sessionDetails(w){
+ if(w.type==='gym'){const p=gymProgress(w);return `${p.done}/${p.total} ejercicios hechos`;}
+ if(w.type==='swim'){const p=swimProgress(w);return p.total?`${p.done}/${p.total} bloques · datos opcionales`:'Datos de piscina opcionales';}
+ return w.type==='run'?'Polar puede completar la carrera':'Registro manual o importación Polar';
+}
+function quickCompleteWorkout(workoutId){
+ const w=db.workouts.find(x=>x.id===workoutId);
+ if(!w||w.done)return;
+ if(w.type==='gym'){openWorkout(w.id);return;}
+ if(w.date>today()&&!confirm('Este entrenamiento está previsto para una fecha futura. ¿Marcarlo como realizado?'))return;
+ w.done=true;w.completedAt=new Date().toISOString();w.doneSource=w.polarSourceId?'polar':'manual';
+ if(!persist())return;
+ render();toast(w.type==='swim'?'Piscina marcada como hecha. Los datos siguen siendo opcionales.':'Entrenamiento marcado como realizado.');
+}
+
 function toast(s,error=false){const el=$('toast');el.textContent=s;el.style.background=error?'#5f2733':'#245e4f';el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',3300)}
 function setTab(t){tab=t;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));render();window.scrollTo({top:0,behavior:'smooth'})}
 function drawHead(title,sub='',action=''){return `<div class="sectionhead"><div><h2>${title}</h2>${sub?`<div class="sub">${sub}</div>`:''}</div>${action}</div>`}
 function stateLabel(w){return w.done?'<span class="chip good">✓ Realizada</span>':'<span class="chip">Planificada</span>'}
-function summary(w){if(w.type==='gym')return `${w.exercises?.length||0} ejercicios`;
- if(w.type==='run'||w.type==='swim'){let c=w.cardio||{};return `${(w.type==='swim'?swimMeters(w):c.distance)>0?fmtN(w.type==='swim'?swimMeters(w):c.distance,w.type==='run'?2:0)+(w.type==='run'?' km':' m'):(c.plannedDistance!=null?'Obj. '+fmtN(c.plannedDistance,w.type==='run'?1:0)+(w.type==='run'?' km':' m'):'Sin distancia')} · ${c.duration||'Sin tiempo'}`}
+function summary(w){if(w.type==='gym'){let p=gymProgress(w);return `${p.done}/${p.total} ejercicios realizados`;}
+ if(w.type==='run'||w.type==='swim'){let c=w.cardio||{};if(w.done&&!swimMeters(w)&&w.type==='swim'&&!parseTime(c.duration))return 'Realizada · datos de piscina opcionales';if(w.done&&w.type==='run'&&!nz(c.distance)&&!parseTime(c.duration))return 'Realizada · pendiente de datos Polar';return `${(w.type==='swim'?swimMeters(w):c.distance)>0?fmtN(w.type==='swim'?swimMeters(w):c.distance,w.type==='run'?2:0)+(w.type==='run'?' km':' m'):(c.plannedDistance!=null?'Obj. '+fmtN(c.plannedDistance,w.type==='run'?1:0)+(w.type==='run'?' km':' m'):'Sin distancia')} · ${c.duration||'Sin tiempo'}`}
  if(w.type==='test')return 'Marcas de pruebas físicas';return w.note||'Recuperación';}
 function swimMeters(w){const v=(w.drills||[]).reduce((a,d)=>a+nz(d.distanceActual),0);return v>0?v:nz(w.cardio?.distance)}
 function swimPlanMeters(w){const v=(w.drills||[]).reduce((a,d)=>a+nz(d.distancePlan),0);return v>0?v:nz(w.cardio?.plannedDistance)}
@@ -159,14 +193,18 @@ function renderPanel(){const m=getMeso(),c=calc(),all=m?workoutsByMeso(m):[],don
  const weekIndex=m?Math.max(0,Math.min(Math.floor(diffDays(m.start,today())/7),Math.ceil((diffDays(m.start,m.end)+1)/7)-1)):0;
  const currentList=all.filter(w=>w.date>=addDays(m.start,weekIndex*7)&&w.date<=addDays(m.start,weekIndex*7+6)).sort((a,b)=>a.date.localeCompare(b.date));
  const upcoming=currentList.length?currentList:all.slice(0,7);
+ const gymPending=db.workouts.filter(w=>w.type==='gym'&&!w.done&&w.date>=addDays(today(),-14)&&w.date<=addDays(today(),21)).sort((a,b)=>Math.abs(diffDays(today(),a.date))-Math.abs(diffDays(today(),b.date))||a.date.localeCompare(b.date));
  const recs=gymRecords(),pr=Object.values(recs).map(r=>({name:r.name,max:bestOf(r.sets.map(s=>s.kg),'max'),set:r.sets.sort((a,b)=>(b.e1rm||0)-(a.e1rm||0))[0]})).filter(x=>x.max!=null).sort((a,b)=>b.max-a.max);
  return `<section class="card hero"><div class="eyebrow">Tu centro de entrenamiento · Plan SUB9</div><h1>Entrena, registra y descubre<br>cómo estás progresando.</h1><p>Mesociclos editables, sesiones por día, cargas de gimnasio, series de carrera, zonas, natación y mejores marcas. Todo en un solo archivo.</p><div class="heroactions"><button class="primary" data-action="new-today">＋ Registrar sesión</button><button data-tab="calendario">Ver calendario semanal</button><button data-tab="estadisticas">Consultar récords</button><button data-tab="polar">♥ Datos Polar</button></div></section>
  <div class="kpis" style="margin:15px 0"><div class="card stat"><div class="k-label">Entrenos realizados</div><div class="k-value">${c.done.length}</div><div class="k-foot">Historial completo</div></div><div class="card stat"><div class="k-label">Kilómetros corriendo</div><div class="k-value">${fmtN(c.km,1)} <span style="font-size:15px;color:var(--muted)">km</span></div><div class="k-foot">Solo sesiones registradas</div></div><div class="card stat"><div class="k-label">Volumen de gimnasio</div><div class="k-value">${fmtN(c.volume,0)} <span style="font-size:15px;color:var(--muted)">kg</span></div><div class="k-foot">Suma kg × repeticiones</div></div><div class="card stat"><div class="k-label">Mejor test de 2 km</div><div class="k-value">${c.best2k?timeFmt(c.best2k):'—'}</div><div class="k-foot">${c.best2k?'Tu mejor marca registrada':'Referencia previa: 9:33 (sin importar)'}</div></div></div>
+ <div class="card gymtodo"><div class="sectionhead"><div><h2>🏋 Tareas pendientes · Gimnasio</h2><div class="sub">Marca cada ejercicio cuando lo termines. Puedes guardar el entrenamiento a medias.</div></div><button class="small" data-tab="calendario">Ver calendario</button></div>
+ ${gymPending.length?gymPending.slice(0,6).map(w=>{const p=gymProgress(w);return `<div class="listrow"><div class="gymtodo-main"><div class="meta">${fmtDay(w.date)} · <span class="taskflag ${sessionState(w).code}">${sessionState(w).label}</span></div><b>${esc(w.title)}</b><div class="meta">${p.done}/${p.total} ejercicios terminados</div><div class="progress mini-progress"><i style="width:${p.total?Math.round(p.done/p.total*100):0}%"></i></div></div><button class="small primary" data-action="edit-workout" data-id="${esc(w.id)}">${p.done?'Continuar':'Empezar'}</button></div>`}).join(''):`<div class="emptystate small-empty">No tienes tareas de gimnasio pendientes en las próximas semanas.</div>`}
+ </div>
  <div class="two"><div class="card"><div class="sectionhead"><div><h2>Mesociclo activo</h2><div class="sub">${m?esc(m.phase):'Sin mesociclos'}</div></div><button class="small" data-tab="mesociclos">Gestionar</button></div>
  ${m?`<div style="font-size:20px;font-weight:800">${esc(m.title)}</div><p style="margin:5px 0">${fmtDate(m.start)} — ${fmtDate(m.end)}</p><div class="row space"><span class="meta">${done} de ${all.length} sesiones completadas</span><span class="numaccent">${pct}%</span></div><div class="progress" style="margin:10px 0 16px"><i style="width:${pct}%"></i></div><div class="row"><button class="primary small" data-action="select-meso" data-id="${esc(m.id)}">Abrir el mesociclo</button><button class="small" data-action="edit-meso" data-id="${esc(m.id)}">Editar fechas</button></div>`:'Crea un mesociclo para comenzar.'}
  <div class="borderline"></div><h3>Pruebas objetivo</h3><div class="grid2"><div><div class="meta">2 km</div><strong>&lt; ${esc(db.settings?.goal2k||'9:00')}</strong></div><div><div class="meta">Flexiones</div><strong>≥ 22</strong></div><div><div class="meta">Plancha</div><strong>≥ 52 s</strong></div><div><div class="meta">Agilidad</div><strong>≤ 14,6 s</strong></div><div><div class="meta">Natación 50 m</div><strong>&lt; 1:00</strong></div></div></div>
  <div class="card"><div class="sectionhead"><div><h2>Agenda de la semana</h2><div class="sub">Toca una actividad para modificar marcas, series o ritmos</div></div><button class="small" data-tab="calendario">Ver todo</button></div>
- ${upcoming.length?upcoming.map(w=>`<div class="listrow"><div style="min-width:0"><div class="meta">${fmtDay(w.date)} ${w.done?'· ✓ Realizada':''}</div><b style="display:block;overflow-wrap:anywhere">${esc(w.title)}</b><div class="meta">${esc(summary(w))}</div></div><button class="small" data-action="edit-workout" data-id="${esc(w.id)}">Abrir</button></div>`).join(''):`<div class="emptystate">Todavía no hay sesiones planificadas.</div>`}</div></div>
+ ${upcoming.length?upcoming.map(w=>`<div class="listrow"><div style="min-width:0"><div class="meta">${fmtDay(w.date)} · <span class="taskflag ${sessionState(w).code}">${sessionState(w).label}</span></div><b style="display:block;overflow-wrap:anywhere">${esc(w.title)}</b><div class="meta">${esc(summary(w))}</div></div><button class="small" data-action="edit-workout" data-id="${esc(w.id)}">Abrir</button></div>`).join(''):`<div class="emptystate">Todavía no hay sesiones planificadas.</div>`}</div></div>
  <div class="two" style="margin-top:15px"><div class="card"><div class="sectionhead"><h2>Tus mejores cargas</h2><button class="small" data-tab="estadisticas">Más estadísticas</button></div>${pr.length?pr.slice(0,5).map(r=>`<div class="listrow"><div><b>${esc(r.name)}</b><div class="meta">${r.set?fmtDate(r.set.date):''}</div></div><strong class="numaccent">${fmtN(r.max)} kg</strong></div>`).join(''):`<div class="emptystate"><span class="big-icon">🏋</span>Cuando registres tus primeras series aquí aparecerán los récords de cada ejercicio.</div>`}</div>
  <div class="card"><h2>Tu punto de partida</h2><p class="help">Referencias orientativas de tu seguimiento anterior. No se cuentan como entrenamientos realizados ni como récords importados.</p><div class="record-grid"><div class="record"><div class="meta">Test 2 km</div><div class="value">9:33</div></div><div class="record"><div class="meta">Flexiones</div><div class="value">23</div></div><div class="record"><div class="meta">Plancha frontal</div><div class="value">1:13</div></div><div class="record"><div class="meta">Circuito agilidad</div><div class="value">14 s</div></div></div></div></div>`;
 }
@@ -177,14 +215,14 @@ function renderCalendar(){const m=getMeso();if(!m)return `<div class="card">No t
  let start=addDays(m.start,week*7),end=addDays(m.start,Math.min((week+1)*7-1,diffDays(m.start,m.end)));
  let ds=[];for(let n=week*7;n<=Math.min((week+1)*7-1,diffDays(m.start,m.end));n++){
   let d=addDays(m.start,n),ws=workoutsByDate(d),isToday=d===today();
-  ds.push(`<div class="day ${isToday?'today':''}"><div class="daytop"><div><div class="dow">${asDate(d).toLocaleDateString('es-ES',{weekday:'short'})}</div><div class="num">${asDate(d).getDate()}</div><div class="tiny muted">${asDate(d).toLocaleDateString('es-ES',{month:'short'})}</div></div>${isToday?'<span class="mark">HOY</span>':''}</div><div class="dayacts">${ws.map(w=>`<button class="dayact ${w.done?'done':''}" data-action="edit-workout" data-id="${esc(w.id)}">${w.done?'✓ ':typeIcon(w.type)+' '}${esc(w.title)}${w.type==='gym'?`<span class="muted"> · ${w.exercises?.length||0} ej.</span>`:''}</button>`).join('')}</div><button class="plus" data-action="new-on-date" data-date="${d}" title="Añadir actividad">＋ <span class="desk-add">Añadir</span></button></div>`);
+  ds.push(`<div class="day ${isToday?'today':''}"><div class="daytop"><div><div class="dow">${asDate(d).toLocaleDateString('es-ES',{weekday:'short'})}</div><div class="num">${asDate(d).getDate()}</div><div class="tiny muted">${asDate(d).toLocaleDateString('es-ES',{month:'short'})}</div></div>${isToday?'<span class="mark">HOY</span>':''}</div><div class="dayacts">${ws.map(w=>`<div class="task-day-row"><button class="dayact ${w.done?'done':''}" data-action="edit-workout" data-id="${esc(w.id)}"><span>${typeIcon(w.type)} ${esc(w.title)}</span><span class="taskflag ${sessionState(w).code}">${sessionState(w).label}</span>${w.type==='gym'?`<span class="task-mini">${esc(sessionDetails(w))}</span>`:''}</button>${!w.done&&['swim','run'].includes(w.type)?`<button class="quickdone" type="button" title="Marcar como realizado sin datos" data-action="quick-complete" data-id="${esc(w.id)}">✓</button>`:''}</div>`).join('')}</div><button class="plus" data-action="new-on-date" data-date="${d}" title="Añadir actividad">＋ <span class="desk-add">Añadir</span></button></div>`);
  }
  body+=`<div class="calendarWeek"><div class="weektitle"><span>Semana ${week+1} · ${fmtDate(start)} — ${fmtDate(end)}</span><span>${db.workouts.filter(w=>w.date>=start&&w.date<=end&&w.done).length} completadas</span></div><div class="days">${ds.join('')}</div></div>`;
  }
  return `${drawHead('Calendario del mesociclo','Selecciona el día y abre la sesión para anotar las marcas.',`<button class="primary" data-action="new-today">＋ Nueva sesión</button>`)}
  <div class="card" style="margin-bottom:14px"><div class="grid2"><div><label>Mesociclo</label><select id="calendarMeso">${db.mesocycles.map(x=>`<option value="${esc(x.id)}" ${x.id===m.id?'selected':''}>${esc(x.title)}</option>`).join('')}</select></div><div><label>Periodo</label><div style="font-size:14px;padding:10px 0">${fmtDate(m.start)} — ${fmtDate(m.end)}</div></div></div><div class="row space" style="margin-top:12px"><div class="row"><button class="small" data-action="prev-meso" ${index===0?'disabled':''}>← Mesociclo anterior</button><button class="small" data-action="next-meso" ${index===db.mesocycles.length-1?'disabled':''}>Siguiente →</button></div><div class="row"><button class="small" data-action="edit-meso" data-id="${esc(m.id)}">Editar fechas</button><button class="soft small" data-action="fill-meso" data-id="${esc(m.id)}">Rellenar huecos con plantilla</button></div></div></div>
  <div class="sectionhead"><div class="row"><button class="small ${weeklyView?'primary':''}" data-action="toggle-week" data-view="week">Por semana</button><button class="small ${!weeklyView?'primary':''}" data-action="toggle-week" data-view="all">Mesociclo completo</button></div>${weeklyView?`<div class="weektabs">${Array.from({length:count},(_,i)=>`<button class="small ${i===selectedWeek?'active':''}" data-action="week" data-week="${i}">S${i+1}</button>`).join('')}</div>`:''}</div>
- ${body}<div class="inline-note">Las sesiones que ves son propuestas editables. Puedes cambiar el deporte, añadir actividades al mismo día o ajustar las series, los kilos, los ritmos y las fechas.</div>`;
+ ${body}<div class="inline-note">○ Pendiente · ◐ En curso · ✓ Hecha. En gimnasio abre la tarea y marca los ejercicios; en piscina puedes pulsar ✓ sin introducir ningún dato. Polar completa carreras y natación importadas cuando las reconoce.</div>`;
 }
 function renderMesocycles(){let arr=[...db.mesocycles].sort((a,b)=>a.start.localeCompare(b.start));
  return `${drawHead('Mis mesociclos','Crea, renombra, mueve o cambia el contenido de cualquier bloque.',`<button class="primary" data-action="add-meso">＋ Crear mesociclo</button>`)}<div class="mesolist">${arr.map((m,i)=>{
@@ -194,7 +232,7 @@ function renderMesocycles(){let arr=[...db.mesocycles].sort((a,b)=>a.start.local
 function renderHistory(){let rows=db.workouts.filter(w=>w.done).sort((a,b)=>b.date.localeCompare(a.date));if(historyFilter!=='all')rows=rows.filter(w=>w.type===historyFilter);
  return `${drawHead('Historial de entrenamientos','Solo aparecen aquí las sesiones marcadas como realizadas.',`<button class="primary" data-action="new-today">＋ Registrar ahora</button>`)}
  <div class="card"><div class="row space" style="margin-bottom:12px"><div class="row"><label style="margin:0">Filtrar</label><select class="filterselect" id="historyFilter"><option value="all">Todas las actividades</option>${['gym','run','swim','test','other'].map(t=>`<option value="${t}" ${t===historyFilter?'selected':''}>${typeLabel(t)}</option>`).join('')}</select></div><span class="chip">${rows.length} sesiones</span></div>
- ${rows.length?rows.slice(0,500).map(w=>`<div class="sessioncard" style="margin-bottom:8px"><div><div class="meta">${fmtDate(w.date)} · <span class="pill ${w.type}">${typeIcon(w.type)} ${typeLabel(w.type)}</span></div><div class="title">${esc(w.title)}</div><div class="meta">${esc(summary(w))}${w.effort?' · Esfuerzo '+w.effort+'/10':''}</div></div><button class="small" data-action="edit-workout" data-id="${esc(w.id)}">Detalle</button></div>`).join(''):`<div class="emptystate"><span class="big-icon">📋</span>Todavía no has marcado ninguna sesión como realizada. Abre un entrenamiento desde el calendario y registra tus resultados.</div>`}</div>`;
+ ${rows.length?rows.slice(0,500).map(w=>`<div class="sessioncard" style="margin-bottom:8px"><div><div class="meta">${fmtDate(w.date)} · <span class="pill ${w.type}">${typeIcon(w.type)} ${typeLabel(w.type)}</span> ${w.polarSourceId?'<span class="taskflag done">Importado de Polar</span>':''}</div><div class="title">${esc(w.title)}</div><div class="meta">${esc(summary(w))}${w.effort?' · Esfuerzo '+w.effort+'/10':''}</div></div><button class="small" data-action="edit-workout" data-id="${esc(w.id)}">Detalle</button></div>`).join(''):`<div class="emptystate"><span class="big-icon">📋</span>Todavía no has marcado ninguna sesión como realizada. Abre un entrenamiento desde el calendario y registra tus resultados.</div>`}</div>`;
 }
 function lineChart(data,unit='',invert=false){
  if(!data||data.length===0)return `<div class="emptystate">Registra varias sesiones para ver tu evolución.</div>`;
@@ -305,8 +343,9 @@ function selectField(label,path,value,opts){return `<div class="formfield"><labe
 function renderGym(){
  let exercises=draft.exercises||[];
  let b=exercises.map((ex,i)=>{
+  let exDone=gymExerciseDone(ex),setCount=recordedGymSeries(ex);
   let record=gymRecords()[String(ex.name||'').toLowerCase().trim()], prev=record?.sets?.sort((x,y)=>y.date.localeCompare(x.date))[0];
-  return `<div class="exercise"><div class="exercisehead"><b>Ejercicio ${i+1}</b><div class="row"><button class="small soft" data-action="copy-gym-ex" data-i="${i}" type="button">Copiar plan → real</button><button class="small danger" data-action="remove-exercise" data-i="${i}" type="button">Eliminar</button></div></div>
+  return `<div class="exercise ${exDone?'exercise-completed':''}"><div class="exercisehead"><div><b>Ejercicio ${i+1}</b><div class="meta">${setCount}/${(ex.sets||[]).length} series anotadas</div></div><div class="row"><label class="exercise-done"><input type="checkbox" data-path="exercises.${i}.completed" ${exDone?'checked':''}> ${exDone?'✓ Hecho':'Marcar hecho'}</label><button class="small soft" data-action="copy-gym-ex" data-i="${i}" type="button">Copiar plan → real</button><button class="small danger" data-action="remove-exercise" data-i="${i}" type="button">Eliminar</button></div></div>
   <div class="grid3" style="margin-bottom:11px">${field('Nombre','exercises.'+i+'.name',ex.name,'text','list="exerciseNames"')}${selectField('Unidad de esfuerzo','exercises.'+i+'.unit',ex.unit||'reps',[['reps','Repeticiones'],['s','Segundos']])}${field('Descanso entre series (s)','exercises.'+i+'.restSec',ex.restSec,'number','min="0" step="1"')}</div>
   ${prev?`<div class="help" style="margin-bottom:10px">Última serie registrada: ${fmtDate(prev.date)} · ${fmtN(prev.kg,1)} kg × ${fmtN(prev.reps,0)} ${ex.unit==='s'?'s':'rep.'}</div>`:''}
   <div class="table-scroll"><div class="sets" style="min-width:540px"><div class="sethead"><div class="columnname">Serie</div><div class="columnname">Plan kg</div><div class="columnname">Plan ${ex.unit==='s'?'s':'reps'}</div><div class="columnname">Real kg</div><div class="columnname">Real ${ex.unit==='s'?'s':'reps'}</div><div class="columnname">RIR</div><div></div></div>
@@ -320,7 +359,8 @@ function renderGym(){
   <div class="row space" style="margin-top:12px"><button type="button" class="soft small" data-action="add-set" data-i="${i}">＋ Añadir serie</button><span class="meta">RIR = repeticiones que te quedaban en reserva</span></div>
   ${area('Notas de este ejercicio','exercises.'+i+'.notes',ex.notes,2)}
   </div>`;}).join('');
- return `<div class="inline-note">Introduce el objetivo a la izquierda y las marcas reales a la derecha. <b>No es necesario marcar una serie que no hayas hecho.</b> Se registran peso, repeticiones o segundos y RIR.</div>
+ const pg=gymProgress(draft);
+ return `<div class="inline-note"><b>Gimnasio · ${pg.done}/${pg.total} ejercicios hechos.</b> Marca ✓ en cada ejercicio al terminarlo, aunque no apuntes las cargas. También puedes anotar tus pesos, repeticiones y RIR. Guarda el progreso cuando quieras; la sesión sigue pendiente hasta completarla.</div><div class="progress" style="margin:12px 0 16px"><i style="width:${pg.total?Math.round(pg.done/pg.total*100):0}%"></i></div>
  ${b}<datalist id="exerciseNames">${EX.map(e=>`<option value="${esc(e.name)}"></option>`).join('')}</datalist>
  <div class="row" style="margin-top:12px"><button class="soft" data-action="add-exercise" type="button">＋ Añadir ejercicio</button><button data-action="copy-gym-all" type="button">Copiar toda la planificación a resultados</button></div>`;
 }
@@ -334,11 +374,11 @@ function renderRun(){const c=draft.cardio||{},intervals=draft.intervals||[];
 }
 function renderSwim(){const c=draft.cardio||{},pool=nz(draft.poolLength)||25,drills=draft.drills||[];
  const planSum=drills.reduce((n,x)=>n+nz(x.distancePlan),0),actualSum=drills.reduce((n,x)=>n+nz(x.distanceActual),0);
- return `<div class="inline-note"><b>Cuaderno de piscina.</b> Escribe los ejercicios que mande el profesor, la distancia prevista y la que completes. Puedes añadir tantos bloques como necesites. En una piscina de ${fmtN(pool,0)} m, 6 largos son ${fmtN(pool*6,0)} m.</div>
+ return `<div class="inline-note"><b>🏊 Los datos de piscina son totalmente opcionales.</b> Puedes pulsar "Marcar como hecha" sin escribir metros ni tiempos. Si Polar importa la sesión después, añadirá lo que haya registrado sin borrar los ejercicios del profesor. En una piscina de ${fmtN(pool,0)} m, 6 largos son ${fmtN(pool*6,0)} m.</div>
  <div class="grid3" style="margin-top:14px">${field('Longitud de piscina (m)','poolLength',draft.poolLength??25,'number','min="1" step="1"')}${field('Profesor / clase / grupo','teacher',draft.teacher||'','text','placeholder="Clase dirigida"')}${field('Distancia prevista total (m)','cardio.plannedDistance',c.plannedDistance,'number','min="0" step="25"')}${field('Distancia real total (m)','cardio.distance',c.distance,'number','min="0" step="25"')}${field('Tiempo total (mm:ss)','cardio.duration',c.duration,'text','placeholder="35:00"')}${field('FC media (opcional)','cardio.avgHr',c.avgHr,'number','min="0" max="240"')}</div>
  <div class="borderline"></div><div class="sectionhead"><h3>Ejercicios indicados por el profesor</h3><div class="row"><button type="button" class="small" data-action="pool-example">Plantilla de clase</button><button type="button" class="soft small" data-action="add-drill">＋ Ejercicio</button></div></div>
  <div class="row" style="margin-bottom:12px"><span class="chip">Plan por ejercicios: <b>${fmtN(planSum,0)} m</b></span><span class="chip good">Real por ejercicios: <b>${fmtN(actualSum,0)} m</b></span></div>
- ${drills.length?drills.map((d,i)=>`<div class="exercise"><div class="row space" style="margin-bottom:10px"><b>Bloque ${i+1}</b><button class="small danger" type="button" data-action="remove-drill" data-i="${i}">Eliminar</button></div>
+ ${drills.length?drills.map((d,i)=>`<div class="exercise ${swimDrillDone(d)?'exercise-completed':''}"><div class="row space" style="margin-bottom:10px"><b>Bloque ${i+1}</b><div class="row"><label class="exercise-done"><input type="checkbox" data-path="drills.${i}.completed" ${swimDrillDone(d)?'checked':''}> ${swimDrillDone(d)?'✓ Hecho':'Marcar hecho'}</label><button class="small danger" type="button" data-action="remove-drill" data-i="${i}">Eliminar</button></div></div>
  ${field('Ejercicio / técnica indicada','drills.'+i+'.name',d.name,'text','placeholder="6 largos con pull buoy"')}
  <div class="grid3" style="margin:11px 0">${field('Distancia prevista (m)','drills.'+i+'.distancePlan',d.distancePlan,'number','min="0" step="25"')}${field('Distancia hecha (m)','drills.'+i+'.distanceActual',d.distanceActual,'number','min="0" step="25"')}${field('Tiempo (mm:ss, opcional)','drills.'+i+'.time',d.time,'text','placeholder="2:05"')}</div>
  <p class="help">${d.distancePlan?`${fmtN(nz(d.distancePlan)/pool,1)} largos previstos · `:''}${d.distanceActual?`${fmtN(nz(d.distanceActual)/pool,1)} largos completados`:''}</p>
@@ -354,11 +394,11 @@ function renderWorkoutModal(){
  if(!draft)return;const old=$('modalContent')?.querySelector('.dialogbody'),sy=old?.scrollTop||0;
  let content=draft.type==='gym'?renderGym():draft.type==='run'?renderRun():draft.type==='swim'?renderSwim():draft.type==='test'?renderTest():'<p class="help">Registra aquí descanso, movilidad, sensaciones y las observaciones de la jornada.</p>';
  const body=`<div class="dialogheader"><div><div class="meta">Mi diario de entrenamiento</div><div class="dialogtitle">${typeIcon(draft.type)} ${esc(draft.title)}</div></div><button class="small icononly" data-action="close-modal" type="button" aria-label="Cerrar">✕</button></div>
- <div class="dialogbody"><div class="grid3">${field('Fecha','date',draft.date,'date')}${selectField('Actividad','type',draft.type,[['gym','🏋 Gimnasio'],['run','🏃 Carrera'],['swim','🏊 Piscina'],['test','🎯 Test físico'],['other','🌿 Descanso / otra']])}${field('Título de la sesión','title',draft.title,'text')}</div>
+ <div class="dialogbody"><div class="row" style="margin:0 0 14px"><span class="taskflag ${sessionState(draft).code}">${sessionState(draft).label}</span>${draft.polarSourceId?'<span class="taskflag done">Datos Polar Flow</span>':''}</div><div class="grid3">${field('Fecha','date',draft.date,'date')}${selectField('Actividad','type',draft.type,[['gym','🏋 Gimnasio'],['run','🏃 Carrera'],['swim','🏊 Piscina'],['test','🎯 Test físico'],['other','🌿 Descanso / otra']])}${field('Título de la sesión','title',draft.title,'text')}</div>
  <div style="margin:10px 0 17px" class="row space"><span class="chip">${esc(mesoByDate(draft.date)?.title||'Fuera de mesociclo')}</span><span class="meta">Puedes crear varias sesiones en el mismo día</span></div>
  ${content}<div class="borderline"></div><div class="grid3">${selectField('Estado físico previo','wellbeing',draft.wellbeing||'Óptimo',[['Óptimo','Óptimo'],['Fatiga leve','Fatiga leve'],['Sobrecarga','Sobrecarga'],['Molestias','Molestias / dolor']])}${field('Esfuerzo percibido (1–10)','effort',draft.effort,'number','min="1" max="10" step="1"')}<div class="formfield"><label>Estado de la sesión</label><label class="checkline"><input type="checkbox" data-path="done" ${draft.done?'checked':''}> Entrenamiento realizado</label></div></div>
  ${area('Notas generales / sensaciones / molestias','note',draft.note,3)}</div>
- <div class="dialogfoot"><div class="row"><button type="button" class="small danger" data-action="delete-workout">Eliminar sesión</button><button type="button" class="small" data-action="close-modal">Cancelar</button></div><div class="row"><button type="button" data-action="save-workout">Guardar plan</button><button type="button" class="primary" data-action="finish-workout">✓ Guardar como realizada</button></div></div>`;
+ <div class="dialogfoot"><div class="row"><button type="button" class="small danger" data-action="delete-workout">Eliminar sesión</button><button type="button" class="small" data-action="close-modal">Cancelar</button></div><div class="row"><button type="button" data-action="save-workout">${draft.type==='gym'?'Guardar progreso':'Guardar cambios'}</button><button type="button" class="primary" data-action="finish-workout">${draft.done?'✓ Guardar realizada':draft.type==='swim'?'✓ Marcar piscina hecha':draft.type==='gym'?'✓ Finalizar gimnasio':'✓ Marcar realizada'}</button></div></div>`;
  openModal(body,'workout',true);const next=$('modalContent').querySelector('.dialogbody');if(next)next.scrollTop=sy;
 }
 function setNested(obj,path,value){let parts=path.split('.'),p=obj;for(let i=0;i<parts.length-1;i++){if(p[parts[i]]==null)p[parts[i]]={};p=p[parts[i]];}p[parts.at(-1)]=value;}
@@ -369,17 +409,28 @@ function handleFormChange(el){
  if(modalMode==='workout'){
   if(path==='type'&&value!==draft.type){let keep={date:draft.date,note:draft.note,wellbeing:draft.wellbeing};let updated=newWorkout(draft.date,value,mesoByDate(draft.date)?.id||null);updated.id=draft.id;updated.date=keep.date;updated.wellbeing=keep.wellbeing;updated.note=keep.note;updated.done=draft.done;draft=updated;renderWorkoutModal();return;}
   setNested(draft,path,value);
+  if(el.type==='checkbox'&&/^(exercises|drills)\.\d+\.completed$/.test(path)){renderWorkoutModal();return;}
  }else if(modalMode==='meso'){setNested(editingMeso,path,value)}else if(modalMode==='polar'){setNested(editingPolar,path,value)}else if(modalMode==='body'){setNested(editingBody,path,value)}
 }
 function ensureValid(w){if(!/^\d{4}-\d{2}-\d{2}$/.test(w.date)||!Number.isFinite(asDate(w.date).getTime()))return 'Fecha no válida';
  if(w.type==='gym'){for(const e of w.exercises||[]){if(!e.name?.trim())return 'Cada ejercicio de gimnasio necesita nombre.';for(const s of e.sets||[])for(const k of ['plannedKg','plannedReps','actualKg','actualReps','rir'])if(s[k]!=null&&s[k]<0)return 'No se permiten pesos o repeticiones negativos.';}}
  if(w.type==='swim'){for(const d of w.drills||[]){if(nz(d.distanceActual)<0||nz(d.distancePlan)<0)return 'La distancia de piscina no puede ser negativa.';}}
  return null;}
-function saveWorkout(completed){if(!draft)return;const err=ensureValid(draft);if(err)return toast(err,true);
+function saveWorkout(completed){
+ if(!draft)return;const err=ensureValid(draft);if(err)return toast(err,true);
  draft.mesoId=mesoByDate(draft.date)?.id||null;
+ if(draft.type==='gym'){
+  const p=gymProgress(draft);
+  if(completed&&p.total>0&&!p.all&&
+     !confirm(`Has marcado ${p.done} de ${p.total} ejercicios. ¿Finalizar el gimnasio igualmente como sesión parcial?`))return;
+  if(!completed&&!draft.done&&p.all)draft.done=true;
+ }
  if(completed)draft.done=true;
+ if(draft.done){draft.completedAt=draft.completedAt||new Date().toISOString();if(!draft.polarSourceId)draft.doneSource='manual';}
+ else {draft.completedAt=null;if(!draft.polarSourceId)draft.doneSource=null;}
  const i=db.workouts.findIndex(x=>x.id===draft.id);if(i>=0)db.workouts[i]=clone(draft);else db.workouts.push(clone(draft));
- if(!persist())return;closeModal();render();toast(completed?'Entrenamiento guardado como realizado.':'Planificación guardada.');}
+ if(!persist())return;const wasDone=draft.done;closeModal();render();toast(wasDone?'✓ Entrenamiento realizado y guardado.':'Progreso guardado; la sesión sigue pendiente.');
+}
 function openMesoEditor(m){editingMeso=m?clone(m):{id:id(),title:`M${db.mesocycles.length+1} · Nuevo mesociclo`,start:addDays(db.mesocycles.reduce((s,x)=>x.end>s?x.end:s,today()),1),end:'',phase:'Personalizado',description:''};if(!editingMeso.end)editingMeso.end=addDays(editingMeso.start,27);renderMesoModal();}
 function renderMesoModal(){const m=editingMeso;if(!m)return;
  const exists=db.mesocycles.some(x=>x.id===m.id),count=db.workouts.filter(w=>w.mesoId===m.id).length;
@@ -718,7 +769,7 @@ function polarMerge(data){
   // Gimnasio se registra manualmente; no importar sesiones genéricas del reloj.
   if(!['run','swim'].includes(p.kind))continue;
   const t=p.kind;
-  let candidates=db.workouts.filter(w=>w.date===p.date&&w.type===t&&!w.done&&!w.polarSourceId);
+  let candidates=db.workouts.filter(w=>w.date===p.date&&w.type===t&&!w.polarSourceId&&(!w.done||(!nz(w.cardio?.distance)&&!parseTime(w.cardio?.duration))));
   let match=candidates.length===1?candidates[0]:null;
   if(!match){
    const similar=db.workouts.filter(w=>w.date===p.date&&w.type===t&&w.done&&!w.polarSourceId&&
@@ -730,7 +781,7 @@ function polarMerge(data){
   let w=match||newWorkout(p.date,t,mesoByDate(p.date)?.id||null);
   if(!match){w.title='Polar · '+({'gym':'Gimnasio','run':'Carrera','swim':'Natación','other':'Entrenamiento'}[t]);w.exercises=[];db.workouts.push(w);summary.newWorkouts++;}
   else summary.filledPlanned++;
-  w.polarSourceId=p.sourceId;w.polarSport=p.sport;w.done=true;
+  w.polarSourceId=p.sourceId;w.polarSport=p.sport;w.done=true;w.doneSource='polar';w.completedAt=w.completedAt||new Date().toISOString();
   w.cardio=w.cardio||{};
   if(p.durationSec>0){let seconds=Math.round(p.durationSec);w.cardio.duration=seconds>=3600?`${Math.floor(seconds/3600)}:${String(Math.floor(seconds%3600/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`:`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;}
   if(p.distanceMeters>0)w.cardio.distance=t==='swim'?Math.round(p.distanceMeters):Math.round(p.distanceMeters/1000*1000)/1000;
@@ -832,6 +883,7 @@ document.addEventListener('click',e=>{
  case 'delete-polar':if(editingPolar&&confirm('¿Borrar la lectura Polar de '+fmtDate(editingPolar.date)+'?')){db.polar=db.polar.filter(p=>p.id!==editingPolar.id);persist();closeModal();render();toast('Registro Polar eliminado.')}break;
  case 'new-on-date':newOnDate(el.dataset.date);break;
  case 'edit-workout':openWorkout(el.dataset.id);break;
+ case 'quick-complete':quickCompleteWorkout(el.dataset.id);break;
  case 'close-modal':closeModal();break;
  case 'save-workout':saveWorkout(false);break;
  case 'finish-workout':saveWorkout(true);break;
@@ -891,6 +943,18 @@ initCloud();
 .metric-grid .card{padding:13px}
 @media(max-width:1000px){.metric-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px){.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.topactions #syncState{font-size:10px;padding:7px 8px}.brand small{font-size:9px}}
+
+/* v3.3 · Seguimiento de tareas por día / ejercicio */
+.taskflag{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:8px;font-size:11px;font-weight:750;white-space:nowrap;border:1px solid #6b7686;color:#cedae6;background:#243345}
+.taskflag.done{border-color:#478875;background:#173e35;color:#aef2d7}
+.taskflag.progress{border-color:#b19150;background:#433824;color:#ffe7ad}
+.taskflag.pending{border-color:#6a7386;background:#273346;color:#d8e4f6}
+.task-day-row{display:flex;gap:4px;align-items:stretch;margin:5px 0}.task-day-row .dayact{display:flex;flex-direction:column;align-items:flex-start;gap:5px;margin:0;flex:1;min-width:0}
+.task-mini{color:#bed2e5;font-size:10px}.quickdone{font-size:16px;min-width:32px;padding:0 6px;border:1px solid #3d8f78;border-radius:9px;color:#aaf7d7;background:#205347}
+.quickdone:hover{background:#2a705c}.gymtodo{margin-bottom:15px}.gymtodo-main{flex:1;min-width:0}.gymtodo-main b{display:block;margin:4px 0}.mini-progress{height:6px;margin-top:8px;max-width:300px}.small-empty{padding:16px 5px}
+.exercise-completed{border-color:#4ba58a;background:#102f2a}.exercise-done{display:inline-flex;align-items:center;gap:7px;border:1px solid #45766c;background:#1d433b;border-radius:9px;padding:7px 10px;font-weight:750;font-size:12px;color:#cbf7e9;cursor:pointer;white-space:nowrap}
+.exercise-done input{width:18px;height:18px;accent-color:#62e3bc;margin:0;cursor:pointer}
+@media(max-width:600px){.exercisehead{align-items:flex-start;flex-wrap:wrap}.exercisehead>.row{flex-wrap:wrap}.taskflag{font-size:10px}.gymtodo>.sectionhead{gap:9px}.gymtodo .listrow{align-items:center}}
 </style>
 </body>
 </html>
