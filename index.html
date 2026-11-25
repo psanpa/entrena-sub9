@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1423">
-<title>ENTRENA SUB9 v3.6 · Cargas y descansos</title>
+<title>ENTRENA SUB9 v3.7 · Polar nocturno e informes PDF</title>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -18,6 +18,25 @@
 .week-targets{width:100%;border-collapse:collapse;min-width:760px;text-align:left}.week-targets th,.week-targets td{padding:8px;border-bottom:1px solid var(--line)}.week-targets td input{max-width:148px;min-width:86px}.week-targets small{display:block;color:var(--muted);font-weight:400}.week-expected{font-weight:700;color:var(--accent)}
 .plan-sticky-actions{position:sticky;bottom:8px;box-shadow:var(--shadow);z-index:3;border:1px solid var(--accent)}
 @media(max-width:780px){.plan-row-top{grid-template-columns:1fr 1fr}.plan-row-top input{grid-column:1/-1}.plan-row-top button{grid-column:1/-1}.plan-series-mini{grid-template-columns:1fr 1fr}.plan-sticky-actions{position:static}}
+
+/* v3.7 - Navegación íntegramente visible en PC y móvil */
+.app{max-width:1840px;width:100%;padding-left:clamp(12px,1.8vw,28px);padding-right:clamp(12px,1.8vw,28px)}
+.tabs{display:flex;flex-wrap:wrap;overflow:visible;scrollbar-width:auto;gap:6px 8px;align-content:start;padding:6px 0 13px;margin-bottom:19px}
+.tabs .navbtn{font-size:clamp(12px,.84vw,15px);padding:10px clamp(10px,.89vw,15px);min-height:40px;flex:0 0 auto;line-height:1.15}
+@media (min-width:761px) and (max-width:1300px){.tabs .navbtn{flex:1 1 auto}}
+@media (max-width:760px){.app{padding-left:12px;padding-right:12px}.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:0 0 17px;padding:0 0 12px;overflow:visible}.tabs .navbtn{font-size:12px;min-width:0;white-space:normal;padding:10px 7px;line-height:1.25;text-align:center;min-height:43px}}
+@media (max-width:345px){.tabs .navbtn{font-size:11px}}
+.pdf-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.pdf-cards .card{min-width:0}
+.pdf-cards input,.pdf-cards select{margin:10px 0 13px}
+.pdf-cards .primary{white-space:normal;min-height:45px;width:100%}
+@media(max-width:950px){.pdf-cards{grid-template-columns:1fr}}
+.polar-approx{font-size:11px;color:#9bd7ed;white-space:nowrap}
+
+/* v3.7.1: distribucion equilibrada del menu, legible sin desplazamiento horizontal */
+@media(min-width:1550px){.tabs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px 9px}.tabs .navbtn{font-size:14px;text-align:center;min-width:0;padding:12px 8px;white-space:normal}}
+@media(min-width:1000px) and (max-width:1549px){.tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}.tabs .navbtn{font-size:14px;min-width:0;white-space:normal;text-align:center;padding:11px 8px}}
+@media(min-width:761px) and (max-width:999px){.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.tabs .navbtn{font-size:13px;min-width:0;white-space:normal;text-align:center;padding:10px 7px}}
 </style>
 <!-- v3.3.1: conciliación segura de sesiones Polar duplicadas. -->
 
@@ -37,7 +56,7 @@
 <div class="app">
  <header class="top"><div class="brand"><div class="logo">↗</div><div><b>ENTRENA<span style="color:var(--accent)">SUB9</span></b><small>Diario · Mesociclos · Marcas</small></div></div><div class="topactions"><button id="syncState" class="chip warn" data-action="go-cloud" title="Estado de sincronización">● Local · sin conectar</button><button class="primary" id="quickNew">＋ Sesión</button></div></header>
  <nav class="tabs" id="nav">
-  <button data-tab="panel" class="navbtn active">◈ Panel</button><button data-tab="calendario" class="navbtn">▦ Calendario</button><button data-tab="mesociclos" class="navbtn">▣ Mesociclos</button><button data-tab="plansemana" class="navbtn">▦ Semana tipo y series</button><button data-tab="historial" class="navbtn">◷ Historial</button><button data-tab="polar" class="navbtn">♥ Polar</button><button data-tab="polarflow" class="navbtn">⌁ Polar Flow</button><button data-tab="actividad" class="navbtn">👟 Actividad y sueño</button><button data-tab="composicion" class="navbtn">⚖ Báscula</button><button data-tab="nube" class="navbtn">☁ Nube</button><button data-tab="estadisticas" class="navbtn">▥ Estadísticas</button><button data-tab="datos" class="navbtn">⚙ Datos</button>
+  <button data-tab="panel" class="navbtn active">◈ Panel</button><button data-tab="calendario" class="navbtn">▦ Calendario</button><button data-tab="mesociclos" class="navbtn">▣ Mesociclos</button><button data-tab="plansemana" class="navbtn">▦ Semana tipo y series</button><button data-tab="historial" class="navbtn">◷ Historial</button><button data-tab="polar" class="navbtn">♥ Polar</button><button data-tab="polarflow" class="navbtn">⌁ Polar Flow</button><button data-tab="actividad" class="navbtn">👟 Actividad y sueño</button><button data-tab="composicion" class="navbtn">⚖ Báscula</button><button data-tab="nube" class="navbtn">☁ Nube</button><button data-tab="estadisticas" class="navbtn">▥ Estadísticas</button><button data-tab="informes" class="navbtn">▤ Informes PDF</button><button data-tab="datos" class="navbtn">⚙ Datos</button>
  </nav>
  <main id="main"></main>
 </div>
@@ -297,6 +316,7 @@ function render(){
  if(tab==='composicion')main.innerHTML=renderBody();
  if(tab==='nube')main.innerHTML=renderCloud();
  if(tab==='datos')main.innerHTML=renderData();
+ if(tab==='informes')main.innerHTML=renderReports();
 }
 function renderPanel(){const m=getMeso(),c=calc(),all=m?workoutsByMeso(m):[],done=all.filter(w=>w.done).length;
  const pct=all.length?Math.round(done*100/all.length):0;
@@ -546,6 +566,12 @@ function renderStats(){let c=calc(),rec=gymRecords(),keys=Object.keys(rec).sort(
 const POLAR_ZONES=['Z1','Z2','Z3','Z4','Z5','Z6'];
 function newPolarRecord(date=today()){return {id:id(),date,load:null,effort:null,tolerance:null,nightHr:null,hrv:null,sleepHours:null,sleepScore:null,bodyWeight:null,status:'Sin valorar',zoneMins:{Z1:null,Z2:null,Z3:null,Z4:null,Z5:null,Z6:null},notes:''};}
 function polarRatio(p){let a=num(p.effort),b=num(p.tolerance);return a!=null&&b>0?a/b:null;}
+// Polar ofrece medias cardíacas de 5 minutos durante el sueño, no el mínimo instantáneo.
+// nightHr = mínimo verificado/manual; nightHr5min = mínimo de medias de 5 min obtenido de la API.
+function nightHeartValue(p){const manual=num(p?.nightHr);return manual!==null?manual:num(p?.nightHr5min)}
+function nightHeartIsApprox(p){return num(p?.nightHr)===null&&num(p?.nightHr5min)!==null}
+function nightHeartText(p){const x=nightHeartValue(p);return x===null?'—':(nightHeartIsApprox(p)?'≈ ':'')+fmtN(x,0)}
+
 function polarList(){return (db.polar||[]).slice().filter(x=>x&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)).sort((a,b)=>a.date.localeCompare(b.date));}
 function polarFiltered(){let cutoff=polarRange==='all'?'0000-01-01':addDays(today(),1-Number(polarRange));return polarList().filter(x=>x.date>=cutoff&&x.date<=today());}
 function polarChart(series){let dates=[...new Set(series.flatMap(s=>s.points.map(p=>p.date)))].sort();if(!dates.length)return '<div class="emptystate">No hay lecturas para este indicador en el periodo seleccionado. Añade los datos que te dé Polar para activar la gráfica.</div>';
@@ -560,38 +586,39 @@ function polarMetricChart(rows){const options={
  'effort-tolerance':[['Esfuerzo','effort','#78eac0',''],['Tolerancia','tolerance','#62aafb','']],
  'load':[['Carga','load','#f4c773','']],
  'ratio':[['Esfuerzo / Tolerancia','ratio','#c9acff','']],
- 'nightHr':[['FC mínima nocturna','nightHr','#ff9c9d','lpm']],
+ 'nightHr':[['FC nocturna (manual o ≈ 5 min)','nightHr','#ff9c9d','lpm']],
  'hrv':[['VFC / HRV','hrv','#79def6','ms']],
  'sleepHours':[['Horas de sueño','sleepHours','#8fbdff','h']],
  'sleepScore':[['Puntuación del sueño','sleepScore','#8fbdff','']],
  'bodyWeight':[['Peso corporal','bodyWeight','#efc37c','kg']]
  };
- return polarChart((options[polarMetric]||options['effort-tolerance']).map(([name,key,color,unit])=>({name,color,unit,points:rows.map(p=>({date:p.date,y:key==='ratio'?polarRatio(p):num(p[key])})).filter(p=>p.y!==null&&Number.isFinite(p.y))})));
+ return polarChart((options[polarMetric]||options['effort-tolerance']).map(([name,key,color,unit])=>({name,color,unit,points:rows.map(p=>({date:p.date,y:key==='ratio'?polarRatio(p):key==='nightHr'?nightHeartValue(p):num(p[key])})).filter(p=>p.y!==null&&Number.isFinite(p.y))})));
 }
 function renderPolar(){let all=polarList().slice().reverse(),recent=polarFiltered(),last=all[0],avg=values=>{const arr=values.filter(v=>v!==null&&v!==undefined);return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null};
- let avgNight=avg(recent.map(x=>num(x.nightHr))),lastRatio=last?polarRatio(last):null;
+ let avgNight=avg(recent.map(x=>nightHeartValue(x))),lastRatio=last?polarRatio(last):null;
  let zones=Object.fromEntries(POLAR_ZONES.map(z=>[z,recent.reduce((a,p)=>a+nz(p.zoneMins?.[z]),0)]));let zonetotal=Object.values(zones).reduce((a,b)=>a+b,0);
  return `${drawHead('Polar · Control de carga y recuperación','Consulta las métricas importadas de Polar Flow o añade lecturas manuales.',`<div class="row"><button class="soft" data-tab="polarflow">⌁ Importar Polar Flow</button><button class="primary" data-action="new-polar">＋ Añadir lectura Polar</button></div>`)}
  <div class="kpis" style="margin-bottom:15px"><div class="card stat"><div class="k-label">Lecturas registradas</div><div class="k-value">${all.length}</div><div class="k-foot">${last?'Última: '+fmtDate(last.date):'Pendiente de introducir datos'}</div></div>
  <div class="card stat"><div class="k-label">Último esfuerzo / tolerancia</div><div class="k-value">${last&&num(last.effort)!==null?fmtN(last.effort,0):'—'} <span style="font-size:15px;color:var(--muted)">/ ${last&&num(last.tolerance)!==null?fmtN(last.tolerance,0):'—'}</span></div><div class="k-foot">${lastRatio!=null?'Relación: '+fmtN(lastRatio,2):'Relación no calculable'}</div></div>
- <div class="card stat"><div class="k-label">FC mínima nocturna media</div><div class="k-value">${avgNight!==null?fmtN(avgNight,0):'—'} <span style="font-size:15px;color:var(--muted)">lpm</span></div><div class="k-foot">Media del intervalo seleccionado</div></div>
- <div class="card stat"><div class="k-label">Última VFC / HRV</div><div class="k-value">${last&&num(last.hrv)!=null?fmtN(last.hrv,0):'—'} <span style="font-size:15px;color:var(--muted)">ms</span></div><div class="k-foot">${last?esc(last.status||'Sin valorar'):'Sin datos'}</div></div></div>
- <div class="two"><div class="card"><div class="sectionhead"><div><h2>Evolución de tus métricas</h2><div class="sub">Gráfica con los valores reales anotados, sin estimaciones</div></div></div>
- <div class="grid2"><div><label>Medida</label><select id="polarMetric"><option value="effort-tolerance" ${polarMetric==='effort-tolerance'?'selected':''}>Esfuerzo y tolerancia</option><option value="load" ${polarMetric==='load'?'selected':''}>Carga Polar</option><option value="ratio" ${polarMetric==='ratio'?'selected':''}>Relación esfuerzo / tolerancia</option><option value="nightHr" ${polarMetric==='nightHr'?'selected':''}>FC mínima nocturna</option><option value="hrv" ${polarMetric==='hrv'?'selected':''}>Variabilidad cardíaca (HRV)</option><option value="sleepHours" ${polarMetric==='sleepHours'?'selected':''}>Horas de sueño</option><option value="sleepScore" ${polarMetric==='sleepScore'?'selected':''}>Puntuación del sueño</option><option value="bodyWeight" ${polarMetric==='bodyWeight'?'selected':''}>Peso corporal</option></select></div>
+ <div class="card stat"><div class="k-label">FC nocturna: media de mínimos</div><div class="k-value">${avgNight!==null?fmtN(avgNight,0):'—'} <span style="font-size:15px;color:var(--muted)">lpm</span></div><div class="k-foot">Mínimos manuales o mín. de medias de 5 min (≈)</div></div>
+ <div class="card stat"><div class="k-label">Última VFC / HRV</div><div class="k-value">${last&&num(last.hrv)!=null?fmtN(last.hrv,0):'—'} <span style="font-size:15px;color:var(--muted)">ms</span></div><div class="k-foot">Variabilidad nocturna registrada</div></div></div>
+ <div class="two"><div class="card"><div class="sectionhead"><div><h2>Evolución de tus métricas</h2><div class="sub">FC nocturna con ≈: mínimo de medias Polar de 5 min, no pulso instantáneo</div></div></div>
+ <div class="grid2"><div><label>Medida</label><select id="polarMetric"><option value="effort-tolerance" ${polarMetric==='effort-tolerance'?'selected':''}>Esfuerzo y tolerancia</option><option value="load" ${polarMetric==='load'?'selected':''}>Carga Polar</option><option value="ratio" ${polarMetric==='ratio'?'selected':''}>Relación esfuerzo / tolerancia</option><option value="nightHr" ${polarMetric==='nightHr'?'selected':''}>FC nocturna (manual o ≈ 5 min)</option><option value="hrv" ${polarMetric==='hrv'?'selected':''}>Variabilidad cardíaca (HRV)</option><option value="sleepHours" ${polarMetric==='sleepHours'?'selected':''}>Horas de sueño</option><option value="sleepScore" ${polarMetric==='sleepScore'?'selected':''}>Puntuación del sueño</option><option value="bodyWeight" ${polarMetric==='bodyWeight'?'selected':''}>Peso corporal</option></select></div>
  <div><label>Periodo</label><select id="polarRange"><option value="14" ${polarRange==='14'?'selected':''}>Últimos 14 días</option><option value="30" ${polarRange==='30'?'selected':''}>Últimos 30 días</option><option value="90" ${polarRange==='90'?'selected':''}>Últimos 90 días</option><option value="all" ${polarRange==='all'?'selected':''}>Todo el historial</option></select></div></div>
  ${polarMetricChart(recent)}<div class="inline-note">La relación Esfuerzo/Tolerancia se calcula solo cuando introduces ambos valores. Interpreta las variaciones junto con descanso, sensaciones y las indicaciones de Polar; no es un diagnóstico médico.</div></div>
  <div class="card"><h2>Tiempo por zonas Polar</h2><p class="help">Acumulado de los minutos Z1–Z6 que hayas indicado en cada lectura del periodo seleccionado. No se mezclan automáticamente con los de carrera para evitar duplicados.</p>${zonetotal>0?POLAR_ZONES.map(z=>`<div class="barline"><div class="label">${z}</div><div class="track"><i style="width:${zones[z]/zonetotal*100}%"></i></div><div class="amount">${fmtN(zones[z],0)} min</div></div>`).join(''):`<div class="emptystate">Al registrar minutos por zonas en Polar, aparecerá aquí su distribución.</div>`}
- <div class="borderline"></div><h3>¿Qué puedes apuntar?</h3><p class="help">Carga, esfuerzo y tolerancia; FC mínima nocturna; VFC/HRV; sueño; peso corporal; estado y tiempo en las zonas de frecuencia cardíaca. Puedes dejar en blanco cualquier dato que Polar no te facilite.</p><button class="soft" data-action="new-polar">＋ Registrar datos de hoy</button></div></div>
- <div class="card" style="margin-top:15px"><div class="sectionhead"><div><h2>Historial de Polar</h2><div class="sub">Toca cualquier fecha para corregir o completar una lectura</div></div><span class="chip">${all.length} días</span></div>${all.length?`<div class="table-scroll"><table class="mini-table"><thead><tr><th>Fecha</th><th>Carga</th><th>Esfuerzo</th><th>Tolerancia</th><th>FC noche</th><th>HRV</th><th>Sueño</th><th>Estado</th><th></th></tr></thead><tbody>${all.slice(0,150).map(p=>`<tr><td>${fmtDate(p.date)}</td><td>${p.load!=null?fmtN(p.load,0):'—'}</td><td>${p.effort!=null?fmtN(p.effort,0):'—'}</td><td>${p.tolerance!=null?fmtN(p.tolerance,0):'—'}</td><td>${p.nightHr!=null?fmtN(p.nightHr,0):'—'}</td><td>${p.hrv!=null?fmtN(p.hrv,0):'—'}</td><td>${p.sleepHours!=null?fmtN(p.sleepHours,1)+' h':'—'}</td><td>${esc(p.status||'—')}</td><td><button class="small" data-action="edit-polar" data-id="${esc(p.id)}">Editar</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="emptystate"><span class="big-icon">♥</span>Sin registros Polar. Añade tu primera lectura para comenzar a trazar tus gráficas.</div>'}</div>`;
+ <div class="borderline"></div><h3>¿Qué puedes apuntar?</h3><p class="help">Carga, esfuerzo y tolerancia; FC mínima nocturna si la conoces; VFC/HRV; sueño; peso corporal y zonas cardíacas. Polar puede traer automáticamente el mínimo de sus medias de 5 minutos (indicado con ≈).</p><button class="soft" data-action="new-polar">＋ Registrar datos de hoy</button></div></div>
+ <div class="card" style="margin-top:15px"><div class="sectionhead"><div><h2>Historial de Polar</h2><div class="sub">Toca cualquier fecha para corregir o completar una lectura</div></div><span class="chip">${all.length} días</span></div>${all.length?`<div class="table-scroll"><table class="mini-table"><thead><tr><th>Fecha</th><th>Carga</th><th>Esfuerzo</th><th>Tolerancia</th><th>FC noche</th><th>HRV</th><th>Sueño</th><th></th></tr></thead><tbody>${all.slice(0,150).map(p=>`<tr><td>${fmtDate(p.date)}</td><td>${p.load!=null?fmtN(p.load,0):'—'}</td><td>${p.effort!=null?fmtN(p.effort,0):'—'}</td><td>${p.tolerance!=null?fmtN(p.tolerance,0):'—'}</td><td><span title="El símbolo ≈ indica el mínimo de medias de 5 minutos de Polar, no el valor instantáneo">${nightHeartText(p)}</span></td><td>${p.hrv!=null?fmtN(p.hrv,0):'—'}</td><td>${p.sleepHours!=null?fmtN(p.sleepHours,1)+' h':'—'}</td><td><button class="small" data-action="edit-polar" data-id="${esc(p.id)}">Editar</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="emptystate"><span class="big-icon">♥</span>Sin registros Polar. Añade tu primera lectura para comenzar a trazar tus gráficas.</div>'}</div>`;
 }
 function newPolar(date=today()){let p=(db.polar||[]).find(x=>x.date===date);if(p)return editPolar(p.id);editingPolar=newPolarRecord(date);renderPolarModal();}
 function editPolar(recordId){let p=(db.polar||[]).find(x=>x.id===recordId);if(!p)return toast('No se ha encontrado la lectura.',true);editingPolar=clone(p);if(!editingPolar.zoneMins)editingPolar.zoneMins={};renderPolarModal();}
 function renderPolarModal(){let p=editingPolar;if(!p)return;let exists=(db.polar||[]).some(x=>x.id===p.id),ratio=polarRatio(p);
  openModal(`<div class="dialogheader"><div><div class="meta">Seguimiento Polar</div><div class="dialogtitle">♥ ${exists?'Editar':'Añadir'} lectura diaria</div></div><button class="small icononly" data-action="close-modal" type="button">✕</button></div><div class="dialogbody">
- <div class="grid2">${field('Fecha del registro','date',p.date,'date')}${selectField('Estado de recuperación','status',p.status||'Sin valorar',[['Sin valorar','Sin valorar'],['Óptimo','Óptimo'],['Fatiga leve','Fatiga leve'],['Sobrecarga','Sobrecarga'],['Recuperación','Recuperación'],['Molestias','Molestias']])}</div>
+ <div class="grid2">${field('Fecha del registro','date',p.date,'date')}</div>
  <h3 style="margin:20px 0 12px">Carga cardiovascular</h3><div class="grid3">${field('Carga Polar','load',p.load,'number','min="0" step="0.1"')}${field('Esfuerzo','effort',p.effort,'number','min="0" step="0.1"')}${field('Tolerancia','tolerance',p.tolerance,'number','min="0" step="0.1"')}</div>
  <div class="inline-note" style="margin-top:10px">${ratio!=null?'Relación actual Esfuerzo/Tolerancia: <b>'+fmtN(ratio,2)+'</b>.':'Escribe Esfuerzo y Tolerancia para calcular su relación al guardar.'} Introduce exactamente las cifras que ves en tu aplicación Polar.</div>
- <h3 style="margin:20px 0 12px">Recuperación, descanso y peso</h3><div class="grid3">${field('FC mínima nocturna (lpm)','nightHr',p.nightHr,'number','min="0" max="240" step="1"')}${field('Variabilidad cardíaca HRV (ms)','hrv',p.hrv,'number','min="0" step="0.1"')}${field('Horas de sueño','sleepHours',p.sleepHours,'number','min="0" max="24" step="0.1"')}${field('Puntuación sueño (0–100)','sleepScore',p.sleepScore,'number','min="0" max="100" step="1"')}${field('Peso corporal (kg)','bodyWeight',p.bodyWeight,'number','min="0" max="500" step="0.1"')}</div>
+ <h3 style="margin:20px 0 12px">Recuperación, descanso y peso</h3><div class="grid3">${field('FC mínima nocturna (manual, lpm)','nightHr',p.nightHr,'number','min="0" max="240" step="1"')}${field('Variabilidad cardíaca HRV (ms)','hrv',p.hrv,'number','min="0" step="0.1"')}${field('Horas de sueño','sleepHours',p.sleepHours,'number','min="0" max="24" step="0.1"')}${field('Puntuación sueño (0–100)','sleepScore',p.sleepScore,'number','min="0" max="100" step="1"')}${field('Peso corporal (kg)','bodyWeight',p.bodyWeight,'number','min="0" max="500" step="0.1"')}</div>
+ <div class="inline-note" style="margin-top:10px">${num(p.nightHr5min)!==null?'Polar ha calculado un mínimo de medias cada 5 minutos: <b>≈ '+fmtN(p.nightHr5min,0)+' lpm</b>.':'Polar no ha enviado muestras cardíacas nocturnas de 5 minutos para esta fecha.'} Si Polar Flow muestra una mínima nocturna más precisa, puedes introducirla en el campo manual sin perder el valor aproximado.</div>
  <h3 style="margin:20px 0 12px">Minutos en cada zona Polar</h3><div class="grid3">${POLAR_ZONES.map(z=>field(z+' (min)','zoneMins.'+z,p.zoneMins?.[z],'number','min="0" step="0.1"')).join('')}</div><p class="help">Si has apuntado estos mismos minutos en una sesión de carrera, aquí se mostrarán por separado para no contarlos dos veces.</p>
  ${area('Observaciones de recuperación, sueño o fatiga','notes',p.notes,3)}</div>
  <div class="dialogfoot"><div class="row">${exists?'<button class="small danger" type="button" data-action="delete-polar">Eliminar</button>':''}<button class="small" type="button" data-action="close-modal">Cancelar</button></div><button class="primary" type="button" data-action="save-polar">✓ Guardar datos Polar</button></div>`,'polar',true);
@@ -607,7 +634,145 @@ function savePolar(){if(!editingPolar)return;let p=editingPolar;const dateOk=/^\
  if(idx>=0)db.polar[idx]=clone(p);else db.polar.push(clone(p));if(!persist())return;closeModal();render();toast('Lectura Polar guardada. La gráfica ya está actualizada.');
 }
 
-function renderData(){return `${drawHead('Tus datos y seguridad','Respaldo local, exportaciones y sincronización opcional mediante Supabase. Las lecturas Polar pueden añadirse manualmente o importarse desde Polar Flow si conectas tu cuenta.')}<div class="two"><div class="card"><h2>Copias de seguridad</h2><p style="margin-top:9px">Los datos se guardan <b>en este navegador</b>. Si conectas una cuenta en ☁ Nube, también se sincronizan entre móvil y ordenador. Hasta que aparezca «Sincronizado», conserva la copia local.</p><div class="row" style="margin:12px 0"><button class="primary" data-action="export-json">↓ Exportar copia JSON</button><button data-action="import-json">↑ Importar copia JSON</button></div><div class="row"><button data-action="export-csv">↓ Descargar resumen CSV</button><button data-action="export-sets-csv">↓ Descargar series CSV</button><button data-action="export-polar-csv">↓ Descargar Polar CSV</button></div><input id="jsonImport" type="file" accept="application/json,.json" class="hide"><div class="inline-note" style="margin-top:16px">Recomendación: exporta una copia JSON cada semana. Si borras los datos del navegador, pierdes el historial local. La importación reemplaza el contenido existente previa confirmación.</div></div>
+/* ===== INFORMES PDF: sin librerías externas, funciona también offline ===== */
+function reportPeriod(scope){
+ if(scope==='week'){
+  const selected=$('pdfWeekDate')?.value||today(),d=asDate(selected),weekDay=(d.getDay()+6)%7;
+  const start=addDays(selected,-weekDay),end=addDays(start,6);
+  return {start,end,label:'Informe semanal',key:'semana_'+start};
+ }
+ if(scope==='month'){
+  const month=$('pdfMonthDate')?.value||today().slice(0,7);
+  if(!/^\d{4}-\d{2}$/.test(month))return null;
+  const [year,monthNo]=month.split('-').map(Number);
+  const end=dateKey(new Date(year,monthNo,0));
+  return {start:month+'-01',end,label:'Informe mensual',key:'mes_'+month};
+ }
+ const chosen=$('pdfMeso')?.value||getMeso()?.id;
+ const m=db.mesocycles.find(x=>x.id===chosen);if(!m)return null;
+ return {start:m.start,end:m.end,label:'Informe de mesociclo - '+m.title,key:'mesociclo_'+m.start};
+}
+function renderReports(){const meso=db.mesocycles||[];return `${drawHead('Informes PDF','Descarga informes semanales, mensuales o de un mesociclo con tus sesiones reales, series del gimnasio, carrera, natación y Polar.')}
+ <div class="pdf-cards">
+  <div class="card"><h2>Informe semanal</h2><p class="help">Semana de lunes a domingo según la fecha seleccionada.</p><label for="pdfWeekDate">Elegir un día de la semana</label><input id="pdfWeekDate" type="date" value="${today()}"><button class="primary" data-action="pdf-week">↓ Descargar PDF semanal</button></div>
+  <div class="card"><h2>Informe mensual</h2><p class="help">Consolidado del mes natural, con volumen, marcas y recuperación.</p><label for="pdfMonthDate">Mes</label><input id="pdfMonthDate" type="month" value="${today().slice(0,7)}"><button class="primary" data-action="pdf-month">↓ Descargar PDF mensual</button></div>
+  <div class="card"><h2>Informe de mesociclo</h2><p class="help">El bloque completo, incluidas sesiones terminadas y pendientes.</p><label for="pdfMeso">Mesociclo</label><select id="pdfMeso">${meso.map(m=>`<option value="${esc(m.id)}" ${m.id===getMeso()?.id?'selected':''}>${esc(m.title)}</option>`).join('')}</select><button class="primary" data-action="pdf-meso">↓ Descargar PDF del mesociclo</button></div>
+ </div>
+ <div class="card" style="margin-top:15px"><h2>Qué contiene cada PDF</h2><p class="help" style="margin-top:10px">Resumen de entrenamientos y volumen, calendario con las sesiones realizadas y pendientes, series reales de gimnasio, parciales de carrera anotados o importados, kilómetros, natación y promedio de pasos, sueño, HRV y FC nocturna disponibles.</p><div class="inline-note">Los informes incluyen únicamente datos que realmente tengas guardados. Cuando la FC nocturna proviene de muestras de 5 minutos, se señala con ≈ para distinguirla de una mínima introducida manualmente. No se enviará ningún dato a un servicio de PDF externo.</div></div>`;
+}
+function pdfTextEsc(value){
+ const normalized=String(value??'').normalize('NFC').replace(/[\n\r\t]+/g,' ')
+ .replace(/[–—]/g,'-').replace(/×/g,'x').replace(/≈/g,'aprox. ').replace(/≥/g,'>=').replace(/≤/g,'<=')
+ .replace(/€/g,'EUR').replace(/[’‘]/g,"'").replace(/[“”]/g,'"').replace(/…/g,'...')
+ .replace(/[^\x20-\x7e\xa0-\xff]/g,'?');
+ return normalized.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')
+  .replace(/[\x80-\xff]/g,c=>'\\'+c.charCodeAt(0).toString(8).padStart(3,'0'));
+}
+function createPdfDocument(heading,items){
+ let ops=[],pages=[],y=792;const x0=43;
+ function newPage(){if(ops.length)pages.push(ops.join('\n'));ops=[];y=792;ops.push('0.22 0.38 0.43 rg 40 818 515 2 re f');}
+ function addLine(text,kind='normal'){
+  const font=kind==='title'?'F2':kind==='section'?'F2':'F1';
+  const fontSize=kind==='title'?17:kind==='section'?12:9.4;
+  const lineHeight=kind==='title'?23:kind==='section'?20:13;
+  const lineLimit=kind==='title'?61:kind==='section'?75:103;
+  let words=String(text??'').split(/\s+/),pieces=[],piece='';
+  for(let word of words){
+    while(word.length>lineLimit){if(piece){pieces.push(piece);piece='';}pieces.push(word.slice(0,lineLimit));word=word.slice(lineLimit);}
+    if(!piece)piece=word;
+    else if((piece+' '+word).length>lineLimit){pieces.push(piece);piece=word;}
+    else piece+=' '+word;
+  }
+  if(piece)pieces.push(piece);
+  if(!pieces.length)pieces=[' '];
+  for(const chunk of pieces){
+    if(y<52)newPage();
+    if(kind==='section')ops.push('0.25 0.49 0.45 rg');
+    else ops.push('0.10 0.15 0.22 rg');
+    const xx=x0+(kind==='item'?10:0);
+    ops.push('BT /'+font+' '+fontSize+' Tf 1 0 0 1 '+xx+' '+y+' Tm ('+pdfTextEsc(chunk)+') Tj ET');
+    y-=lineHeight;
+  }
+ }
+ newPage();addLine('ENTRENA SUB9  |  '+heading,'title');
+ for(const entry of items){addLine(entry.text,entry.kind||'normal');if(entry.kind==='section')y-=4;}
+ if(ops.length)pages.push(ops.join('\n'));
+ // PDF/A4 con fuentes PDF estándar WinAnsi; strings ASCII con escape octal.
+ const objs=[''];
+ const append=s=>{objs.push(s);return objs.length-1};
+ const cat=append(''),root=append('');
+ const normal=append('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+ const bold=append('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+ const pageRefs=[];
+ pages.forEach((content,i)=>{
+  const footer='0.45 0.50 0.55 rg BT /F1 8 Tf 1 0 0 1 43 24 Tm (ENTRENA SUB9 | pagina '+(i+1)+' de '+pages.length+') Tj ET';
+  const stream=content+'\n'+footer+'\n';
+  const body=append('<< /Length '+stream.length+' >>\nstream\n'+stream+'endstream');
+  pageRefs.push(append('<< /Type /Page /Parent '+root+' 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 '+normal+' 0 R /F2 '+bold+' 0 R >> >> /Contents '+body+' 0 R >>'));
+ });
+ objs[cat]='<< /Type /Catalog /Pages '+root+' 0 R >>';
+ objs[root]='<< /Type /Pages /Count '+pageRefs.length+' /Kids ['+pageRefs.map(n=>n+' 0 R').join(' ')+'] >>';
+ let pdf='%PDF-1.4\n',offsets=[0];
+ for(let i=1;i<objs.length;i++){offsets.push(pdf.length);pdf+=i+' 0 obj\n'+objs[i]+'\nendobj\n';}
+ const startxref=pdf.length;
+ pdf+='xref\n0 '+objs.length+'\n0000000000 65535 f \n';
+ for(let i=1;i<offsets.length;i++)pdf+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
+ pdf+='trailer\n<< /Size '+objs.length+' /Root '+cat+' 0 R >>\nstartxref\n'+startxref+'\n%%EOF\n';
+ return Uint8Array.from(pdf,c=>c.charCodeAt(0));
+}
+function exportReportPdf(scope){
+ const period=reportPeriod(scope);if(!period)return toast('Selecciona un periodo válido.',true);
+ const {start,end,label,key}=period;
+ const workouts=db.workouts.filter(w=>w.date>=start&&w.date<=end).sort((a,b)=>a.date.localeCompare(b.date));
+ const completed=workouts.filter(w=>w.done),run=completed.filter(w=>w.type==='run'),swim=completed.filter(w=>w.type==='swim');
+ const walks=completed.filter(w=>w.type==='walk'),padel=completed.filter(w=>w.type==='padel');
+ const allGym=workouts.filter(w=>w.type==='gym');
+ const actualSets=allGym.flatMap(w=>(w.exercises||[]).flatMap(ex=>(ex.sets||[]).filter(st=>num(st.actualReps)!==null&&num(st.actualReps)>0).map(st=>({date:w.date,name:ex.name,kg:num(st.actualKg),reps:num(st.actualReps),rir:num(st.rir)}))));
+ const volume=actualSets.reduce((a,x)=>a+(x.kg||0)*x.reps,0);
+ const daily=(db.polar||[]).filter(x=>x.date>=start&&x.date<=end);
+ const summaryAvg=field=>{let a=daily.map(field).filter(x=>x!==null&&Number.isFinite(x));return a.length?(a.reduce((x,y)=>x+y,0)/a.length):null};
+ const steps=daily.reduce((a,d)=>a+(num(d.steps)||0),0),sleepAvg=summaryAvg(x=>num(x.sleepHours)),hrvAvg=summaryAvg(x=>num(x.hrv)),nightAvg=summaryAvg(x=>nightHeartValue(x));
+ const totalKm=run.reduce((a,w)=>a+(num(w.cardio?.distance)||0),0),swimM=swim.reduce((a,w)=>a+swimMeters(w),0),walkKm=walks.reduce((a,w)=>a+(num(w.cardio?.distance)||0),0);
+ let items=[{text:fmtDate(start)+' a '+fmtDate(end),kind:'section'},
+  {text:'Generado el '+new Date().toLocaleString('es-ES')},
+  {text:'RESUMEN',kind:'section'},
+  {text:'Sesiones completadas: '+completed.length+' de '+workouts.length+' planificadas/registradas'},
+  {text:'Carrera: '+fmtN(totalKm,2)+' km en '+run.length+' sesiones | Natacion: '+fmtN(swimM,0)+' m en '+swim.length+' sesiones'},
+  {text:'Caminatas: '+fmtN(walkKm,2)+' km | Padel: '+padel.length+' partidos'},
+  {text:'Gimnasio: '+allGym.length+' sesiones, '+actualSets.length+' series reales, volumen '+fmtN(volume,0)+' kg x rep.'},
+  {text:'Polar: pasos '+fmtN(steps,0)+' | Sueno medio '+(sleepAvg===null?'sin datos':fmtN(sleepAvg,2)+' h')+' | HRV media '+(hrvAvg===null?'sin datos':fmtN(hrvAvg,0)+' ms')},
+  {text:'FC nocturna media de minimos disponibles: '+(nightAvg===null?'sin datos':fmtN(nightAvg,0)+' lpm')+' (manual o aprox. por medias de 5 min)'},
+  {text:'SESIONES',kind:'section'}];
+ if(!workouts.length)items.push({text:'Sin sesiones guardadas para este periodo.'});
+ for(const w of workouts){
+   const base=w.date+' | '+typeLabel(w.type)+' | '+w.title+' | '+(w.done?'HECHA':'PENDIENTE');
+   items.push({text:base,kind:'item'});
+   const c=w.cardio||{},distance=['run','walk'].includes(w.type)&&num(c.distance)!==null?fmtN(c.distance,2)+' km':w.type==='swim'&&swimMeters(w)?fmtN(swimMeters(w),0)+' m':'';
+   const detail=[distance,c.duration?('Duracion '+c.duration):'',num(c.avgHr)!==null?('FC '+fmtN(c.avgHr,0)):''].filter(Boolean).join(' | ');
+   if(detail)items.push({text:detail,kind:'item'});
+   if(w.type==='run'){
+     (w.intervals||[]).forEach((it,i)=>{
+       const parts=['Serie '+(i+1),num(it.distance)!==null?fmtN(it.distance,0)+' m':'',it.plannedTime?'objetivo '+it.plannedTime:'',it.actualTime?'real '+it.actualTime:'',num(it.actualDistance)!==null?'real '+fmtN(it.actualDistance,0)+' m':''].filter(Boolean);
+       if(parts.length>1)items.push({text:parts.join(' | '),kind:'item'});
+     });
+   }
+   if(w.type==='swim'){
+     (w.drills||[]).filter(d=>d.name).forEach(d=>items.push({text:d.name+' | '+(num(d.distanceActual)!==null?'real '+fmtN(d.distanceActual,0)+' m':'objetivo '+fmtN(d.distancePlan,0)+' m'),kind:'item'}));
+   }
+ }
+ items.push({text:'SERIES REALES DE GIMNASIO',kind:'section'});
+ if(!actualSets.length)items.push({text:'Todavia no hay series reales anotadas en este periodo.'});
+ else actualSets.forEach(st=>items.push({text:st.date+' | '+st.name+' | '+(st.kg!==null?fmtN(st.kg,1)+' kg x ':'')+fmtN(st.reps,0)+' rep.'+(st.rir!==null?' | RIR '+fmtN(st.rir,0):''),kind:'item'}));
+ items.push({text:'ACTIVIDAD Y RECUPERACION',kind:'section'});
+ if(!daily.length)items.push({text:'Sin registros Polar disponibles en este periodo.'});
+ else daily.sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>items.push({text:p.date+' | '+(num(p.steps)!==null?'Pasos '+fmtN(p.steps,0)+' | ':'')+(num(p.sleepHours)!==null?'Sueno '+fmtN(p.sleepHours,1)+' h | ':'')+(num(p.hrv)!==null?'HRV '+fmtN(p.hrv,0)+' ms | ':'')+(nightHeartValue(p)!==null?'FC nocturna '+(nightHeartIsApprox(p)?'aprox. ':'')+fmtN(nightHeartValue(p),0)+' lpm':''),kind:'item'}));
+ items.push({text:'Nota: Polar registra valores de FC del sueno como medias de unos 5 minutos. Su minimo no equivale necesariamente a la pulsacion minima instantanea.',kind:'normal'});
+ const data=createPdfDocument(label,items);
+ saveBlob('ENTRENA_SUB9_'+key+'.pdf','application/pdf',data);
+ toast('PDF descargado. Revisa la carpeta Descargas.');
+}
+
+function renderData(){return `${drawHead('Tus datos y seguridad','Respaldo local, exportaciones y sincronización opcional mediante Supabase. Las lecturas Polar pueden añadirse manualmente o importarse desde Polar Flow si conectas tu cuenta.')}<div class="two"><div class="card"><h2>Copias de seguridad</h2><p class="help">Los informes PDF estan en la pestaña <button class="small" data-tab="informes">Informes PDF</button>, con periodos semanales, mensuales y mesociclos.</p><p style="margin-top:9px">Los datos se guardan <b>en este navegador</b>. Si conectas una cuenta en ☁ Nube, también se sincronizan entre móvil y ordenador. Hasta que aparezca «Sincronizado», conserva la copia local.</p><div class="row" style="margin:12px 0"><button class="primary" data-action="export-json">↓ Exportar copia JSON</button><button data-action="import-json">↑ Importar copia JSON</button></div><div class="row"><button data-action="export-csv">↓ Descargar resumen CSV</button><button data-action="export-sets-csv">↓ Descargar series CSV</button><button data-action="export-polar-csv">↓ Descargar Polar CSV</button></div><input id="jsonImport" type="file" accept="application/json,.json" class="hide"><div class="inline-note" style="margin-top:16px">Recomendación: exporta una copia JSON cada semana. Si borras los datos del navegador, pierdes el historial local. La importación reemplaza el contenido existente previa confirmación.</div></div>
  <div class="card"><h2>Objetivos personales</h2><div class="grid2" style="margin:14px 0"><div><label>Objetivo 2 km</label><input id="target2k" value="${esc(db.settings?.goal2k||'9:00')}" placeholder="9:00"></div><div><label>Fecha objetivo</label><input id="targetDate" type="date" value="${esc(db.settings?.targetDate||'2027-06-30')}"></div></div><button class="primary small" data-action="save-settings">Guardar objetivos</button><div class="borderline"></div><p class="help">En el panel aparecen las referencias históricas aproximadas que ya conocíamos. Para que entren en las estadísticas como marcas reales, regístralas con su fecha en una sesión de tipo «Pruebas físicas».</p><div class="grid2"><div><label>Test 2 km (referencia)</label><input id="ref2k" value="${esc(db.settings?.reference?.run2k||'')}"></div><div><label>Flexiones (referencia)</label><input id="refPush" type="number" value="${esc(db.settings?.reference?.pushups??'')}"></div><div><label>Plancha (referencia)</label><input id="refPlank" value="${esc(db.settings?.reference?.plank||'')}"></div><div><label>Agilidad (referencia)</label><input id="refAgility" value="${esc(db.settings?.reference?.agility||'')}"></div></div><button class="small" style="margin-top:12px" data-action="save-reference">Actualizar referencias</button></div></div>
  <div class="card" style="margin-top:14px"><div class="sectionhead"><div><h2>Catálogo y mantenimiento</h2><div class="sub">${db.mesocycles.length} mesociclos · ${db.workouts.length} sesiones previstas / registradas</div></div></div><div class="row"><button data-action="new-meso">＋ Añadir mesociclo</button><button class="danger" data-action="reset-all">Restablecer plantilla inicial</button></div><p class="help">Restablecer borra todos tus datos del navegador después de pedir confirmación. Exporta tu copia antes.</p></div>`;
 }
@@ -778,7 +943,7 @@ function exportCsv(){let out=[['Fecha','Mesociclo','Actividad','Sesión','Realiz
 function exportSetsCsv(){let r=[['Fecha','Actividad','Sesión','Ejercicio','Serie / bloque','Plan kg','Plan rep/s','Real kg','Real rep/s','RIR','Distancia prevista m','Distancia real m','Tiempo']];db.workouts.forEach(w=>{if(w.type==='gym')(w.exercises||[]).forEach(e=>(e.sets||[]).forEach((s,i)=>r.push([w.date,'Gimnasio',w.title,e.name,i+1,s.plannedKg,s.plannedReps,s.actualKg,s.actualReps,s.rir,'','',''])));
  if(w.type==='swim')(w.drills||[]).forEach((d,i)=>r.push([w.date,'Piscina',w.title,d.name,i+1,'','','','','',d.distancePlan,d.distanceActual,d.time]));
  if(w.type==='run')(w.intervals||[]).forEach((s,i)=>r.push([w.date,'Carrera',w.title,'Serie',i+1,'','','','','',s.distance,s.distance,s.actualTime]));});saveBlob('EntrenaSUB9_series_y_piscina.csv','text/csv;charset=utf-8',csv(r));}
-function exportPolarCsv(){const headers=['Fecha','Carga','Esfuerzo','Tolerancia','Relación E/T','FC nocturna mínima','VFC HRV ms','Horas sueño','Puntuación sueño','Peso kg','Estado','Z1 min','Z2 min','Z3 min','Z4 min','Z5 min','Z6 min','Observaciones'];let rows=[headers];(db.polar||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>rows.push([p.date,p.load,p.effort,p.tolerance,polarRatio(p)??'',p.nightHr,p.hrv,p.sleepHours,p.sleepScore,p.bodyWeight,p.status,...['Z1','Z2','Z3','Z4','Z5','Z6'].map(z=>p.zoneMins?.[z]),p.notes]));saveBlob('EntrenaSUB9_Polar_'+today()+'.csv','text/csv;charset=utf-8',csv(rows));}
+function exportPolarCsv(){const headers=['Fecha','Carga','Esfuerzo','Tolerancia','Relación E/T','FC nocturna mínima manual','FC mínima de medias 5 min (≈)','VFC HRV ms','Horas sueño','Puntuación sueño','Peso kg','Z1 min','Z2 min','Z3 min','Z4 min','Z5 min','Z6 min','Observaciones'];let rows=[headers];(db.polar||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>rows.push([p.date,p.load,p.effort,p.tolerance,polarRatio(p)??'',p.nightHr,p.nightHr5min,p.hrv,p.sleepHours,p.sleepScore,p.bodyWeight,...['Z1','Z2','Z3','Z4','Z5','Z6'].map(z=>p.zoneMins?.[z]),p.notes]));saveBlob('EntrenaSUB9_Polar_'+today()+'.csv','text/csv;charset=utf-8',csv(rows));}
 async function importJson(file){if(!file)return;try{let x=JSON.parse(await file.text());if(!Array.isArray(x.mesocycles)||!Array.isArray(x.workouts)||x.mesocycles.length>100||x.workouts.length>20000)throw new Error('Estructura o tamaño no válido');if(!x.mesocycles.every(m=>typeof m.id==='string'&&typeof m.start==='string'&&typeof m.end==='string')||!x.workouts.every(w=>typeof w.date==='string'&&['gym','run','swim','walk','padel','other','test'].includes(w.type)))throw new Error('Estructura de datos incompleta');if(!confirm('¿Sustituir toda la información actual con la copia seleccionada? SI ESTÁS CONECTADO A LA NUBE, estas sustituciones y eliminaciones se sincronizarán en otros dispositivos. Exporta primero una copia JSON.'))return;
  db={version:3,settings:x.settings||{},mesocycles:x.mesocycles,workouts:x.workouts,polar:Array.isArray(x.polar)?x.polar:[],body:Array.isArray(x.body)?x.body:[],createdAt:x.createdAt||new Date().toISOString()};selectedMeso=db.mesocycles[0]?.id;selectedWeek=0;persist();closeModal();setTab('panel');toast('Copia restaurada.');}catch(e){toast('No se pudo importar: '+e.message,true)}}
 
@@ -919,7 +1084,7 @@ async function importLegacyFile(file){if(!file)return;try{let data=JSON.parse(aw
 /* ===== Actividad diaria y sueño importados desde Polar Flow ===== */
 function exportActivityCsv(){
  const header=['Fecha','Pasos','Objetivo actividad %','Minutos activos','Calorías total','Calorías activas','Distancia pasos km','Sueño h','Puntuación sueño','Sueño ligero min','Sueño profundo min','Sueño REM min','Interrupciones min','HRV ms','FC media noche','Respiración media noche'];
- const keys=['date','steps','activityPercent','activeMinutes','caloriesTotal','caloriesActive','distanceStepsKm','sleepHours','sleepScore','sleepLightMin','sleepDeepMin','sleepRemMin','sleepInterruptMin','hrv','nightAvgHr','breathingRateAvg'];
+ const keys=['date','steps','activityPercent','activeMinutes','caloriesTotal','caloriesActive','distanceStepsKm','sleepHours','sleepScore','sleepLightMin','sleepDeepMin','sleepRemMin','sleepInterruptMin','hrv','nightAvgHr','nightHr5min','breathingRateAvg'];
  const rows=[header,...polarList().map(p=>keys.map(k=>p[k]??''))];
  saveBlob('EntrenaSUB9_Actividad_Sueno_'+today()+'.csv','text/csv;charset=utf-8',csv(rows));
 }
@@ -1263,6 +1428,9 @@ document.addEventListener('click',e=>{
  case 'prev-meso':case 'next-meso':{const ix=db.mesocycles.findIndex(x=>x.id===selectedMeso)+(act==='prev-meso'?-1:1);if(db.mesocycles[ix]){selectedMeso=db.mesocycles[ix].id;selectedWeek=0;render()}break;}
  case 'toggle-week':weeklyView=el.dataset.view==='week';render();break;
  case 'week':selectedWeek=nz(el.dataset.week);render();break;
+ case 'pdf-week':exportReportPdf('week');break;
+ case 'pdf-month':exportReportPdf('month');break;
+ case 'pdf-meso':exportReportPdf('meso');break;
  case 'export-json':saveBlob('EntrenaSUB9_copia_'+today()+'.json','application/json;charset=utf-8',JSON.stringify(db,null,2));toast('Copia JSON preparada.');break;
  case 'import-json':$('jsonImport')?.click();break;
  case 'export-csv':exportCsv();break;
