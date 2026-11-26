@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1423">
-<title>ENTRENA SUB9 v3.9 · Series por tiempo, piscina y catálogo de gimnasio</title>
+<title>ENTRENA SUB9 v3.9.1 · Eliminaciones definitivas</title>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>/* v3.9: intervalos por tiempo, recuperación avanzada, técnicas de piscina y catálogo de fuerza */
@@ -241,6 +241,49 @@ function gymExerciseDone(ex){
  if(ex.completed===false)return false;
  const sets=ex.sets||[];
  return sets.length>0 && sets.every(st=>num(st.actualReps)!==null);
+}
+// v3.9.1: los ejercicios que el usuario ha descartado no se importan otra vez.
+// Los IDs se guardan en ajustes, que ya se sincronizan con Supabase sin modificar SQL.
+function ignoredPolarSources(){
+ const v=db.settings?.ignoredPolarSources;
+ return v&&typeof v==='object'&&!Array.isArray(v)?v:{};
+}
+function isIgnoredPolarSource(sourceId){
+ return !!sourceId&&Object.prototype.hasOwnProperty.call(ignoredPolarSources(),String(sourceId));
+}
+function allowIgnoredPolar(sourceId){
+ const entries=ignoredPolarSources();
+ if(!Object.prototype.hasOwnProperty.call(entries,sourceId))return;
+ if(!confirm('¿Permitir que Polar vuelva a importar este entrenamiento si todavía lo ofrece?'))return;
+ const updated={...entries};delete updated[sourceId];
+ db.settings={...(db.settings||{}),ignoredPolarSources:updated};
+ if(!persist())return;
+ render();toast('Entrenamiento habilitado para futuras importaciones de Polar.');
+}
+function deleteWorkoutPermanently(){
+ if(!draft)return;
+ const w=db.workouts.find(x=>x.id===draft.id);
+ if(!w)return toast('La sesión ya no existe.',true);
+ const linked=!!w.polarSourceId;
+ const question=linked
+  ?'¿Eliminar esta sesión y sus marcas definitivamente? Su identificador de Polar quedará excluido de futuras importaciones; podrás permitirlo de nuevo en Polar Flow. La eliminación se sincronizará con la nube.'
+  :'¿Eliminar esta sesión y sus marcas definitivamente? Se eliminará también en los otros dispositivos al sincronizar.';
+ if(!confirm(question))return;
+ if(linked){
+  db.settings=db.settings||{};
+  db.settings.ignoredPolarSources={...ignoredPolarSources(),[String(w.polarSourceId)]:{
+    date:w.date,type:w.type,title:w.title,deletedAt:new Date().toISOString()
+  }};
+ }
+ db.workouts=db.workouts.filter(x=>x.id!==w.id);
+ if(!persist())return;
+ // La eliminación explícita es intencionada: evita que una revisión antigua
+ // en otro dispositivo la recupere por un conflicto de fecha de actualización.
+ const key=skey('workouts',w.id);
+ if(sync.queue[key])sync.queue[key].force=true;
+ if(linked){const main=skey('settings','main');if(sync.queue[main])sync.queue[main].force=true;}
+ saveSyncMeta();scheduleSync();closeModal();render();
+ toast(linked?'Sesión eliminada y bloqueada para futuras importaciones de Polar.':'Sesión eliminada; se sincronizará con la nube.');
 }
 function gymProgress(w){const exercises=w.exercises||[];const total=exercises.length;const done=exercises.filter(gymExerciseDone).length;return {done,total,all:total>0&&done===total};}
 function swimDrillDone(d){return d.completed===true||(d.completed!==false&&num(d.distanceActual)!==null&&num(d.distanceActual)>0);}
@@ -1278,8 +1321,23 @@ function applySnapshot(rows){let cloud=rowMap(rows),next={version:3,mesocycles:[
  for(let row of rows){if(row.deleted)continue;if(row.kind==='settings'){next.settings=clone(row.payload);continue;}if(KINDS.includes(row.kind)&&row.payload?.id)next[row.kind].push(clone(row.payload));}
  // Superponer cambios sin subir y conflictos sin resolver para no perder nada fuera de línea.
  for(let q of [...Object.values(sync.queue),...Object.values(sync.conflicts).map(x=>x.local)]){if(!q)continue;let arr=next[q.kind];if(q.kind==='settings'){if(!q.deleted)next.settings=clone(q.payload);continue;}if(!arr)continue;let i=arr.findIndex(x=>x.id===q.itemId);if(q.deleted){if(i>=0)arr.splice(i,1)}else if(i>=0)arr[i]=clone(q.payload);else arr.push(clone(q.payload));}
+ // Si una copia antigua de la nube conserva una sesión que fue descartada,
+ // ocultarla y preparar su borrado remoto en vez de devolverla al calendario.
+ const ignored=next.settings?.ignoredPolarSources||{};
+ const oldPolar=next.workouts.filter(w=>w.polarSourceId&&Object.prototype.hasOwnProperty.call(ignored,String(w.polarSourceId)));
+ if(oldPolar.length){
+  const oldIds=new Set(oldPolar.map(w=>w.id));
+  next.workouts=next.workouts.filter(w=>!oldIds.has(w.id));
+  for(const w of oldPolar){
+   const key=skey('workouts',w.id),remote=cloud[key];
+   if(remote&&!remote.deleted){
+    sync.queue[key]={kind:'workouts',itemId:w.id,payload:{},deleted:true,baseRevision:remote.updated_at,force:true,at:new Date().toISOString()};
+    delete sync.conflicts[key];
+   }
+  }
+ }
  db=next;sync.base=Object.fromEntries(Object.entries(cloud).map(([k,v])=>[k,{updated_at:v.updated_at,deleted:v.deleted}]));syncShadow=snapshotOf(db);
- localStorage.setItem(KEY,JSON.stringify(db));saveSyncMeta();if(!db.mesocycles.some(m=>m.id===selectedMeso))selectedMeso=db.mesocycles[0]?.id;updateSyncBadge();if(!modalMode)render();
+ localStorage.setItem(KEY,JSON.stringify(db));saveSyncMeta();if(!db.mesocycles.some(m=>m.id===selectedMeso))selectedMeso=db.mesocycles[0]?.id;updateSyncBadge();if(!modalMode)render();if(oldPolar.length)scheduleSync();
 }
 async function upsertRows(rows){for(let i=0;i<rows.length;i+=100){let {error}=await sync.client.from('entrena_items').upsert(rows.slice(i,i+100),{onConflict:'user_id,kind,item_id'});if(error)throw error;}}
 async function syncNow(manual=false){if(!sync.user||!sync.client||sync.busy||!navigator.onLine){if(manual&&!navigator.onLine)toast('Sin Internet: se guardará localmente.',true);return;}
@@ -1397,7 +1455,11 @@ function renderPolarFlow(){
  <p class="help">Al importar se guardan los registros en ENTRENA SUB9 y se solicita subirlos a tu cuenta Supabase. Revisa que figure «✓ Sincronizado» antes de cambiar de dispositivo. Cuando abras esta página con conexión, intentará consultar Polar periódicamente (aprox. una vez por hora); no funciona en segundo plano con la web cerrada.</p>
  <p class="help">Polar solo envía las sesiones cuando el reloj se sincroniza con Polar Flow. El gimnasio sigue siendo manual: no se importan repeticiones ni kilos automáticamente.</p>
  <p class="help">La API Polar AccessLink v3 limita ejercicios recientes a los subidos después de vincular tu cuenta y dentro de los últimos 30 días; Cardio Load y sueño ofrecen ventanas recientes. No reproduce automáticamente todo el historial antiguo de Polar Flow.</p>
- <p class="help">Para empezar necesitas un cliente OAuth en <a href="https://admin.polaraccesslink.com/" target="_blank" rel="noopener noreferrer">Polar AccessLink</a>, con dirección de retorno <code>https://psanpa.github.io/entrena-sub9/</code>.</p></div>`;
+ <p class="help">Para empezar necesitas un cliente OAuth en <a href="https://admin.polaraccesslink.com/" target="_blank" rel="noopener noreferrer">Polar AccessLink</a>, con dirección de retorno <code>https://psanpa.github.io/entrena-sub9/</code>.</p></div>
+ <div class="card" style="margin-top:15px"><h2>4 · Entrenamientos descartados</h2>
+ <p class="help">Cuando eliminas una sesión importada de Polar, se guarda su identificador para que no reaparezca al actualizar. La exclusión se sincroniza con tu cuenta y puedes deshacerla aquí.</p>
+ ${Object.keys(ignoredPolarSources()).length?Object.entries(ignoredPolarSources()).sort((a,b)=>(b[1]?.deletedAt||'').localeCompare(a[1]?.deletedAt||'')).slice(0,150).map(([sourceId,v])=>`<div class="listrow"><div><b>${esc(v.title||typeLabel(v.type)||'Entrenamiento Polar')}</b><div class="meta">${esc(v.date||'Fecha sin determinar')} · ID Polar ${esc(sourceId.slice(0,18))}</div></div><button class="small" data-action="polar-allow-workout" data-source-id="${esc(sourceId)}">Permitir de nuevo</button></div>`).join(''):'<p class="help">No has descartado ningún entrenamiento de Polar.</p>'}
+ </div>`;
 }
 async function polarInvoke(action,rest={}){
  if(!sync.user||!sync.client)throw Error('Inicia sesión en ☁ Nube antes de conectar Polar.');
@@ -1476,7 +1538,7 @@ function applyPolarLaps(w,laps){
  return changed;
 }
 function polarMerge(data){
- const summary={newDaily:0,updatedDaily:0,newWorkouts:0,filledPlanned:0,existingWorkouts:0};
+ const summary={newDaily:0,updatedDaily:0,newWorkouts:0,filledPlanned:0,existingWorkouts:0,ignoredWorkouts:0};
  let changed=false;
  for(const p of data.daily||[]){
   if(!/^\d{4}-\d\d-\d\d$/.test(p.date))continue;
@@ -1503,6 +1565,7 @@ function polarMerge(data){
 
  for(const p of data.exercises||[]){
   if(!p.sourceId||!/^\d{4}-\d\d-\d\d$/.test(p.date))continue;
+  if(isIgnoredPolarSource(p.sourceId)){summary.ignoredWorkouts++;continue;}
   let existing=db.workouts.find(w=>w.polarSourceId===p.sourceId);
   if(existing){
    if(p.kind==='run'&&Array.isArray(p.laps)&&p.laps.length){
@@ -1564,7 +1627,7 @@ async function polarFetch(silent=false){
   const data=await polarInvoke('pull');
   const counts=polarMerge(data);
   polarRemote.lastSync=data.fetchedAt||new Date().toISOString();polarRemote.warnings=data.warnings||[];polarRemote.connected=true;polarRemote.checked=true;
-  polarRemote.summary=`Polar consultado: ${counts.newDaily} días nuevos de actividad/recuperación, ${counts.updatedDaily} días ampliados, ${counts.newWorkouts} entrenos añadidos y ${counts.filledPlanned} sesiones planificadas completadas. ${counts.existingWorkouts} entrenos ya existentes.`;
+  polarRemote.summary=`Polar consultado: ${counts.newDaily} días nuevos de actividad/recuperación, ${counts.updatedDaily} días ampliados, ${counts.newWorkouts} entrenos añadidos y ${counts.filledPlanned} sesiones planificadas completadas. ${counts.existingWorkouts} entrenos ya existentes y ${counts.ignoredWorkouts} descartados ignorados.`;
   localStorage.setItem(POLAR_LAST_KEY+':'+sync.user.id,String(Date.now()));
   if(!sync.busy)await syncNow();
   if(!silent)toast('Polar importado. Comprueba el estado de sincronización en ☁ Nube.');
@@ -1624,6 +1687,7 @@ document.addEventListener('click',e=>{
  case 'polar-status':polarStatus();break;
  case 'polar-connect':polarConnect();break;
  case 'polar-fetch':polarFetch();break;
+ case 'polar-allow-workout':allowIgnoredPolar(el.dataset.sourceId);break;
  case 'polar-disconnect':polarDisconnect();break;
  case 'body-new':newBody();break;
  case 'body-edit':editBody(el.dataset.id);break;
@@ -1652,7 +1716,7 @@ document.addEventListener('click',e=>{
  case 'close-modal':closeModal();break;
  case 'save-workout':saveWorkout(false);break;
  case 'finish-workout':saveWorkout(true);break;
- case 'delete-workout':if(draft&&confirm('¿Eliminar esta sesión y sus marcas? Esta acción no se puede deshacer.')){db.workouts=db.workouts.filter(w=>w.id!==draft.id);persist();closeModal();render();toast('Sesión eliminada.')}break;
+ case 'delete-workout':deleteWorkoutPermanently();break;
  case 'add-exercise':if(!draft)return;{const ex=newExercise('Nuevo ejercicio');ex.name='';ex.customName=true;draft.exercises.push(ex);renderWorkoutModal();}break;
  case 'use-last-gym':applyLastGymLoad(i);break;
  case 'remove-exercise':if(draft&&confirm('¿Quitar este ejercicio con todas sus series?')){draft.exercises.splice(i,1);renderWorkoutModal();}break;
