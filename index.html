@@ -2,10 +2,27 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1423">
-<title>ENTRENA SUB9 v3.8 · Informes profesionales y planchas en segundos</title>
+<title>ENTRENA SUB9 v3.9 · Series por tiempo, piscina y catálogo de gimnasio</title>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
+<style>/* v3.9: intervalos por tiempo, recuperación avanzada, técnicas de piscina y catálogo de fuerza */
+.drill-equipment{display:flex;gap:7px 11px;flex-wrap:wrap;margin:7px 0 14px}
+.drill-equipment label{font-size:12px;color:#d0e3ed;display:inline-flex;gap:5px;align-items:center;cursor:pointer;border-radius:8px;border:1px solid #344e66;padding:8px 9px;margin:0}
+.drill-equipment input{width:16px;height:16px;accent-color:#5ddab6}
+.gym-name-picker{display:grid;grid-template-columns:minmax(160px,1fr);gap:8px}
+.last-gym-load{margin:7px 0 12px;padding:10px 12px;border:1px solid #2c755f;border-radius:9px;background:#10362f;color:#b3edd6;font-size:12px}
+.last-gym-load button{margin:5px 0 0 9px}
+.pool-summary-row{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+
+.interval-card-v39{padding:13px;margin:10px 0;border:1px solid #37536b;border-radius:13px;background:#0f2235}
+.interval-card-v39 h4{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;font-size:14px;color:#d2eee4}
+.interval-card-v39 .grid3,.interval-card-v39 .grid4{margin-bottom:11px}
+.interval-card-v39 .grid3:last-child,.interval-card-v39 .grid4:last-child{margin-bottom:0}
+.run-mode-choice{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+.run-mode-choice button{padding:8px 11px}
+.plan-time-fields{grid-column:1/-1;border:1px solid #315268;border-radius:10px;padding:10px;background:#12273b}
+@media(max-width:760px){.interval-card-v39 .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 :root{--bg:#0b1423;--bg2:#101d30;--card:#14243a;--card2:#192b43;--line:#2b3b53;--ink:#eef5ff;--muted:#9cafc5;--accent:#62e3bc;--accent2:#54a7ff;--gold:#f5c66f;--bad:#ff7b84;--purple:#bcabff;--radius:18px;--shadow:0 18px 48px #0002}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 70% -10%,#193752 0,transparent 39%),var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}input,select,textarea{color:var(--ink);background:#0e1b2d;border:1px solid #354961;border-radius:11px;padding:11px 12px;outline:0;width:100%;min-width:0}input:focus,select:focus,textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 3px #54a7ff22}input[type=checkbox]{width:auto;accent-color:var(--accent)}input[type=number]{font-variant-numeric:tabular-nums}input::placeholder,textarea::placeholder{color:#758ba3}textarea{min-height:76px;resize:vertical}label{display:block;color:#b4c6dc;font-size:12px;font-weight:650;margin-bottom:6px}h1,h2,h3,h4,p{margin-top:0}h1{font-size:clamp(28px,4vw,40px);line-height:1.15;letter-spacing:-1.2px;margin-bottom:10px}h2{font-size:21px;letter-spacing:-.4px;margin:0}h3{font-size:16px;margin-bottom:12px}p{color:var(--muted)}button,.btn{background:#203650;border:1px solid #37516a;color:var(--ink);padding:10px 15px;border-radius:11px;font-weight:730;transition:background .15s,transform .15s;white-space:nowrap}button:hover{background:#2b4768}button:active{transform:scale(.985)}button.primary{background:var(--accent);border-color:var(--accent);color:#062d27}button.primary:hover{background:#8ef0d0}button.soft{background:#183a42;border-color:#2f6868;color:#9af7d6}button.danger{background:#48252d;color:#ffc0c7;border-color:#77404a}button.ghost{background:transparent}button.small{font-size:12px;padding:6px 10px;border-radius:9px}button.icononly{width:37px;height:37px;padding:6px;display:grid;place-items:center}.app{max-width:1440px;margin:0 auto;padding:0 24px 45px}.top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 0 15px}.brand{display:flex;align-items:center;gap:12px}.logo{width:45px;height:45px;border-radius:14px;background:linear-gradient(145deg,#67e5bf,#53a8ff);display:grid;place-items:center;color:#092234;font-size:22px;font-weight:1000;box-shadow:0 5px 27px #69e8c32d}.brand b{letter-spacing:1.4px;font-size:17px}.brand small{display:block;color:var(--muted);font-size:11px;letter-spacing:.25px}.topactions{display:flex;gap:8px;align-items:center}.chip{border:1px solid #33506b;color:#c6d5e7;background:#193049;padding:5px 10px;border-radius:100px;font-size:12px;white-space:nowrap}.chip.good{color:#98f5d4;background:#173d36;border-color:#326b5e}.chip.warn{color:#ffe0a7;background:#493b26;border-color:#75603b}.chip.bad{color:#ffacb2;background:#4a282e;border-color:#7e4046}.tabs{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:15px;border-bottom:1px solid var(--line);margin-bottom:25px}.tabs::-webkit-scrollbar{display:none}.navbtn{background:transparent;border:1px solid transparent;color:#a5b7cc;padding:10px 14px;white-space:nowrap}.navbtn.active{background:#21403f;border-color:#3b8d78;color:#9cf6d7}.sectionhead{display:flex;gap:12px;align-items:center;justify-content:space-between;margin:0 0 17px;flex-wrap:wrap}.sectionhead .sub{color:var(--muted);font-size:13px;margin:4px 0 0}.stack{display:grid;gap:15px}.card{background:linear-gradient(160deg,#172b42,#122238);border:1px solid #2a4059;border-radius:var(--radius);box-shadow:var(--shadow);padding:19px}.card.inset{background:#0e1d30;box-shadow:none}.hero{background:linear-gradient(120deg,#1b443d,#18304a 65%,#173c59);border:1px solid #376766;position:relative;overflow:hidden;min-height:190px;padding:27px}.hero:after{content:'↗';position:absolute;right:28px;bottom:-96px;color:#77e1c313;font-size:300px;line-height:1;font-weight:900;pointer-events:none}.hero h1{max-width:690px}.hero p{max-width:640px;color:#c9dfdb}.heroactions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:2.4px;color:#79eac9;font-weight:800;margin-bottom:9px}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.stat .k-label{font-size:12px;color:#acc0d5}.stat .k-value{font-size:29px;font-weight:850;letter-spacing:-.7px;margin:7px 0 4px}.stat .k-foot{color:#a2b9cf;font-size:11px}.two{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(290px,1fr);gap:15px}.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.listrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #2c4055}.listrow:last-child{border-bottom:0}.meta{font-size:12px;color:var(--muted)}.muted{color:var(--muted)}.tiny{font-size:11px}.emptystate{text-align:center;padding:32px 12px;color:var(--muted)}.big-icon{font-size:35px;display:block;margin-bottom:10px}.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;border-radius:7px;padding:4px 7px;font-weight:720;background:#2a3d56;color:#d4e5f8}.pill.gym{background:#433153;color:#e1bcff}.pill.run{background:#203f43;color:#91ebce}.pill.swim{background:#193f61;color:#9ad5ff}.pill.walk{background:#214d41;color:#a9f4cf}.pill.padel{background:#4a3358;color:#e4baff}.pill.test{background:#514027;color:#ffe0a3}.pill.other{background:#3a4353;color:#d1d8e8}.pill.done{background:#174c3b;color:#89efbe}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.space{justify-content:space-between}.grow{flex:1}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.help{font-size:12px;color:#8faac3;margin-top:5px}.inline-note{background:#1f3441;border:1px solid #395b62;border-radius:11px;padding:11px 13px;color:#add9d6;font-size:12px}.borderline{border-top:1px solid #30445c;margin:15px 0}.progress{background:#24364b;height:9px;border-radius:30px;overflow:hidden}.progress i{display:block;background:linear-gradient(90deg,#52a6ff,#69e9b6);height:100%;border-radius:30px}.dayhint{font-size:12px;color:#a5b9cd}.mesolist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.mesocard{position:relative;overflow:hidden}.mesocard:before{content:'';position:absolute;left:0;top:0;height:100%;width:4px;background:var(--accent2)}.mesocard.selected{border-color:#58d9bc;box-shadow:0 0 0 1px #58d9bc35}.mesocard .index{font-size:12px;text-transform:uppercase;font-weight:820;letter-spacing:1px;color:#79d8cb}.mesocard h3{font-size:18px;margin:5px 0 5px}.calendarWeek{margin-bottom:20px}.weektitle{margin:15px 0 9px;font-size:13px;color:#c2d5e9;font-weight:760;display:flex;justify-content:space-between;gap:10px}.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.day{border:1px solid #2d445f;background:#15253c;border-radius:13px;padding:10px;min-height:162px;min-width:0}.day.today{border-color:#75d8bc;box-shadow:inset 0 0 0 1px #448779}.day .num{font-size:20px;font-weight:840}.day .dow{color:var(--muted);font-size:11px;text-transform:uppercase}.day .daytop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:11px}.day .dayact{display:block;text-align:left;background:#23384f;color:#cedceb;border:1px solid #3c5369;border-radius:7px;padding:6px 7px;width:100%;margin:5px 0;font-size:11px;line-height:1.2;white-space:normal}.day .dayact.done{border-color:#397d6b;background:#1c423c}.day .plus{background:transparent;border:1px dashed #4b6881;color:#95c7da;width:100%;font-size:11px;padding:7px;margin-top:7px}.weektabs{display:flex;gap:5px;flex-wrap:wrap}.weektabs button.active{background:#284c4a;border-color:#55bd9b;color:#a1f4d3}.sessionarea{display:grid;gap:10px}.sessioncard{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid #304661;background:#122237;padding:12px;border-radius:12px}.sessioncard>div{min-width:0}.sessioncard button{flex-shrink:0}.sessioncard .title{font-weight:750}.mini-table{width:100%;border-collapse:collapse}.mini-table th{text-align:left;font-size:11px;color:#96aac2;font-weight:700;padding:9px 7px;border-bottom:1px solid #30465a}.mini-table td{padding:9px 7px;border-bottom:1px solid #253b51;font-size:13px}.mini-table tr:last-child td{border-bottom:0}.table-scroll{overflow:auto}.mini-table .numcell{text-align:right;font-variant-numeric:tabular-nums}.chartwrap{height:226px;position:relative;margin-top:10px}.chartwrap svg{width:100%;height:100%}.chartaxis{fill:#91a9bf;font-size:11px}.barline{display:flex;gap:12px;align-items:center;padding:8px 0}.barline .label{min-width:116px;color:#bfcfe0;font-size:13px}.barline .track{flex:1;min-width:0;height:10px;border-radius:6px;background:#21364a;overflow:hidden}.barline .track i{height:100%;display:block;background:linear-gradient(90deg,#63a9ff,#6be6c7);border-radius:6px}.barline .amount{font-size:12px;min-width:52px;text-align:right}.sortbtns{display:flex;flex-wrap:wrap;gap:7px}.filterselect{width:auto;max-width:280px}.numaccent{color:#7af0c9;font-weight:800}.record-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.record{border:1px solid #37536a;padding:14px;border-radius:13px;background:#11263a}.record .value{font-size:23px;font-weight:860;color:#8bf2ce}.record .subject{font-weight:780}.record small{color:#99aec4}.footnote{font-size:12px;color:#9ab0c6;margin:13px 0 0}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#245e4f;color:white;padding:12px 20px;border:1px solid #67bd9f;border-radius:14px;box-shadow:0 10px 55px #0008;z-index:1000;display:none;max-width:90vw;text-align:center}.overlay{position:fixed;inset:0;background:#030912b9;z-index:50;display:none;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}.overlay.open{display:flex}.dialog{background:#14243a;border:1px solid #3c5773;border-radius:20px;box-shadow:0 25px 100px #000a;max-width:790px;width:100%;margin:auto;overflow:hidden}.dialog.wide{max-width:980px}.dialogheader{position:sticky;top:0;background:#14243a;border-bottom:1px solid #304860;z-index:2;padding:16px 19px;display:flex;justify-content:space-between;gap:14px;align-items:center}.dialogtitle{font-size:18px;font-weight:850}.dialogbody{padding:19px;max-height:calc(100vh - 195px);overflow-y:auto}.dialogfoot{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:15px 19px;border-top:1px solid #304860;background:#162840;flex-wrap:wrap}.exercise{border:1px solid #385069;border-radius:15px;padding:14px;margin:13px 0;background:#102138}.exercisehead{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}.exercise .sets{display:grid;grid-template-columns:42px repeat(5,minmax(0,1fr)) 37px;gap:6px;align-items:end}.exercise .sets .columnname{font-size:10px;line-height:1.2;color:#9db2ca;font-weight:650;margin-bottom:4px;min-height:25px}.exercise .sets input{padding:8px 5px;text-align:center;font-size:13px}.exercise .setnumber{font-size:12px;font-weight:800;color:#adc4db;align-self:center}.exercise .sethead{display:contents}.exercise .setrow{display:contents}.exercise .sets.compact{grid-template-columns:42px repeat(3,minmax(0,1fr)) 37px}.exercise .sets.sets-timed{grid-template-columns:42px repeat(2,minmax(0,1fr)) 37px}.interval{display:grid;grid-template-columns:35px repeat(4,minmax(0,1fr)) 35px;gap:6px;align-items:end;margin-bottom:8px}.interval label{font-size:10px;min-height:25px}.interval input{padding:8px 6px;text-align:center}.testrow{display:grid;grid-template-columns:minmax(100px,1.4fr) 1fr 1fr;gap:8px;align-items:center;margin:9px 0}.testrow label{margin:0}.compacthelp{color:#9aaec4;font-size:12px}.settingrow{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #30445c}.settingrow:last-child{border-bottom:0}.mark{display:inline-block;border-radius:7px;background:#1b463b;padding:3px 7px;color:#93edc7;font-size:11px;font-weight:800}.hide{display:none!important}
 @media(max-width:1024px){.days{grid-template-columns:repeat(4,minmax(0,1fr))}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:760px){.app{padding:0 12px 110px}.top{padding:13px 1px}.brand small{font-size:10px}.brand b{font-size:15px}.topactions .chip{display:none}.tabs{gap:4px;margin:0 -12px 17px;padding:0 8px 11px}.navbtn{font-size:12px;padding:9px 10px}.card{padding:15px}.hero{padding:19px;min-height:auto}.hero:after{font-size:170px;bottom:-53px;right:-3px}.kpis{gap:9px}.stat .k-value{font-size:24px}.two,.three,.mesolist,.grid4{grid-template-columns:1fr}.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.days{grid-template-columns:1fr;gap:6px}.day{min-height:0;padding:10px 12px;display:grid;grid-template-columns:88px minmax(0,1fr) 62px;gap:9px;align-items:center}.day .daytop{margin:0;display:block}.day .num{font-size:20px}.day .dayacts{min-width:0}.day .plus{margin:0;padding:6px}.day .dayact{margin:3px 0;padding:7px}.dialogbody{max-height:calc(100dvh - 150px)}.overlay{padding:0}.dialog,.dialog.wide{min-height:100dvh;border-radius:0;max-width:none;margin:0}.dialogheader{padding:13px}.dialogbody{padding:13px}.dialogfoot{padding:11px 13px;position:sticky;bottom:0;z-index:2}.exercise{padding:10px}.exercise .sets{grid-template-columns:29px repeat(4,minmax(0,1fr)) 26px;gap:3px}.exercise .sets.compact{grid-template-columns:29px repeat(3,minmax(0,1fr)) 26px}.exercise .sets input{font-size:12px;padding:7px 1px}.exercise .sets .columnname{font-size:9px}.interval{grid-template-columns:24px repeat(4,minmax(0,1fr)) 26px;gap:3px}.interval input{padding:7px 1px;font-size:12px}.record-grid{grid-template-columns:1fr}.topactions button{padding:9px}.weektabs{gap:3px}.weektabs button{font-size:11px;padding:7px 9px}}
@@ -103,6 +120,71 @@ const EX=[
 {name:'Plancha lateral',sets:2,reps:25,kg:null,rest:45,unit:'s'}, {name:'Saltos al cajón',sets:3,reps:5,kg:0,rest:90},
 {name:'Pogos suaves',sets:2,reps:10,kg:0,rest:60}, {name:'Remo sentado',sets:3,reps:8,kg:25,rest:90}
 ];
+const ADDITIONAL_GYM_EXERCISES=[
+ 'Trap bar','Prensa de piernas','Extensión de cuádriceps','Curl femoral sentado','Elevación de gemelos',
+ 'Dominadas','Dominadas asistidas','Fondos en paralelas','Press inclinado con mancuernas',
+ 'Press inclinado con barra','Aperturas con mancuernas','Cruce de poleas',
+ 'Elevaciones laterales','Pájaros con mancuernas','Face pull','Curl de bíceps',
+ 'Curl martillo','Extensión de tríceps en polea','Remo con mancuerna',
+ 'Remo en máquina','Jalón agarre neutro','Peso muerto convencional',
+ 'Abdominales en polea','Crunch abdominal','Elevaciones de piernas',
+ 'Zancadas con mancuernas','Step ups','Abducción de cadera','Aductores en máquina'
+];
+function gymNameKey(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es').trim();}
+function gymExerciseNames(){
+ const all=[...EX.map(x=>x.name),...ADDITIONAL_GYM_EXERCISES,...db.workouts.filter(w=>w.type==='gym').flatMap(w=>(w.exercises||[]).map(e=>e.name))];
+ const m=new Map();all.filter(Boolean).forEach(n=>{const k=gymNameKey(n);if(k&&!m.has(k))m.set(k,n)});
+ return [...m.values()].sort((a,b)=>a.localeCompare(b,'es'));
+}
+// Solo considera kilos y repeticiones realmente guardados en sesiones previas;
+// no confunde objetivos, maximos históricos ni datos del entrenamiento abierto.
+function lastGymActual(name,untilDate,exceptWorkoutId){
+ const key=gymNameKey(name);if(!key)return null;
+ const matches=[];
+ for(const w of db.workouts){
+  if(w.type!=='gym'||w.id===exceptWorkoutId||(untilDate&&w.date>untilDate))continue;
+  for(const e of w.exercises||[]){if(gymNameKey(e.name)!==key)continue;
+   for(const [seriesIndex,st] of (e.sets||[]).entries()){
+    const reps=num(st.actualReps),kg=num(st.actualKg);
+    if(reps>0&&(isTimedGymExercise(e)||kg!==null&&kg>=0))matches.push({date:w.date,updatedAt:w.completedAt||'',seriesIndex,kg:isTimedGymExercise(e)?null:kg,reps,unit:gymUnit(e)});
+   }
+  }
+ }
+ matches.sort((a,b)=>b.date.localeCompare(a.date)||b.updatedAt.localeCompare(a.updatedAt)||b.seriesIndex-a.seriesIndex);
+ return matches[0]||null;
+}
+function gymNamePicker(ex,index){
+ let names=gymExerciseNames();if(ex.name&&!names.some(n=>gymNameKey(n)===gymNameKey(ex.name))&&!ex.customName)names.push(ex.name);
+ const custom=!!ex.customName||!ex.name||ex.name==='Nuevo ejercicio';
+ const choices=names.map(name=>`<option value="${esc(name)}" ${!custom&&name===ex.name?'selected':''}>${esc(name)}</option>`).join('');
+ return `<div class="formfield gym-name-picker"><label>Ejercicio (selecciona del catálogo)</label><select aria-label="Ejercicio del gimnasio" data-gym-select="${index}"><option value="" disabled ${!custom&&!ex.name?'selected':''}>Seleccionar ejercicio…</option>${choices}<option value="__custom__" ${custom?'selected':''}>＋ Otro / escribir ejercicio</option></select>${custom?field('Nombre del ejercicio personalizado',`exercises.${index}.name`,ex.name==='Nuevo ejercicio'?'':ex.name,'text','placeholder="Escribe el nombre"'):''}</div>`;
+}
+function chooseGymExercise(index,choice){
+ const ex=draft?.exercises?.[index];if(!ex)return;
+ if(choice==='__custom__'){
+  ex.customName=true;if(ex.name==='Nuevo ejercicio')ex.name='';renderWorkoutModal();return;
+ }
+ if(!choice)return;
+ if(ex.name!==choice&&(ex.sets||[]).some(st=>num(st.actualReps)>0)&&!confirm('Este ejercicio ya tiene series reales. ¿Cambiar el nombre conservando sus series?')){renderWorkoutModal();return;}
+ const wasBlank=!ex.name||ex.name==='Nuevo ejercicio';
+ if(wasBlank){let fresh=newExercise(choice);fresh.id=ex.id;fresh.notes=ex.notes||'';draft.exercises[index]=fresh;}
+ else{ex.name=choice;ex.customName=false;const base=EX.find(e=>gymNameKey(e.name)===gymNameKey(choice));ex.unit=isPlankExercise(ex)?'s':(base?.unit||'reps');}
+ const selected=draft.exercises[index],last=lastGymActual(selected.name,draft.date,draft.id);
+ if(wasBlank&&last&&last.kg!==null&&selected.unit!=='s'){
+  selected.sets.forEach(st=>{st.plannedKg=last.kg;});
+ }
+ renderWorkoutModal();
+}
+function applyLastGymLoad(index){
+ const ex=draft?.exercises?.[index];if(!ex)return;
+ const last=lastGymActual(ex.name,draft.date,draft.id);
+ if(!last){toast('No existe una marca real anterior para este ejercicio.',true);return;}
+ for(const set of ex.sets||[]){
+  if(last.unit==='s'){set.plannedReps=last.reps;}
+  else if(last.kg!==null){set.plannedKg=last.kg;}
+ }
+ renderWorkoutModal();toast('Última marca copiada solo a los objetivos; las series reales siguen vacías.');
+}
 function isPlankExercise(ex){return /plancha/i.test(String(ex?.name||''));}
 function isTimedGymExercise(ex){return isPlankExercise(ex)||ex?.unit==='s';}
 function gymUnit(ex){return isTimedGymExercise(ex)?'s':(ex?.unit||'reps');}
@@ -256,11 +338,21 @@ function summary(w){
  }
  if(w.type==='test')return 'Marcas de pruebas físicas';return w.note||'Recuperación';
 }
-function swimMeters(w){const v=(w.drills||[]).reduce((a,d)=>a+nz(d.distanceActual),0);return v>0?v:nz(w.cardio?.distance)}
+function swimMeters(w){const v=(w.drills||[]).reduce((a,d)=>a+nz(d.distanceActual),0);return Math.max(v,nz(w.cardio?.distance))}
 function swimPlanMeters(w){const v=(w.drills||[]).reduce((a,d)=>a+nz(d.distancePlan),0);return v>0?v:nz(w.cardio?.plannedDistance)}
-function newDrill(name='Ejercicio indicado por el profesor',distancePlan=null){return {id:id(),name,distancePlan,distanceActual:null,time:'',notes:''}}
+const SWIM_STYLES=[['','No especificado'],['crol','Crol'],['espalda','Espalda'],['braza','Braza'],['mariposa','Mariposa'],['estilos','Estilos combinados'],['libre','Libre']];
+const SWIM_FOCUS=[['','No especificado'],['completo','Nado completo'],['piernas','Solo piernas'],['brazos','Solo brazos'],['tecnica','Técnica'],['velocidad','Velocidad / sprint'],['continuo','Nado continuo'],['calentamiento','Calentamiento'],['respiracion','Respiración'],['virajes','Virajes']];
+const SWIM_MATERIALS=[['pull','Pull buoy'],['aletas','Aletas'],['palas','Palas / manoplas'],['tabla','Tabla'],['tubo','Tubo frontal']];
+function newDrill(name='Ejercicio indicado por el profesor',distancePlan=null){return {id:id(),name,style:'',focus:'',materials:{},lapsPlan:null,lapsActual:null,distancePlan,distanceActual:null,time:'',notes:''};}
+function swimDrillLabel(d){
+ const parts=[String(d.name||'').trim()];
+ if(d.style)parts.push(SWIM_STYLES.find(x=>x[0]===d.style)?.[1]||d.style);
+ if(d.focus)parts.push(SWIM_FOCUS.find(x=>x[0]===d.focus)?.[1]||d.focus);
+ const mats=SWIM_MATERIALS.filter(([key])=>d.materials?.[key]).map(x=>x[1]);if(mats.length)parts.push('Con '+mats.join(', '));
+ return parts.filter(Boolean).join(' · ')||'Ejercicio de piscina';
+}
 function renderSwimStats(){let a=db.workouts.filter(w=>w.done&&w.type==='swim').sort((x,y)=>x.date.localeCompare(y.date));const data=a.map(w=>({date:w.date,y:swimMeters(w)})).filter(x=>x.y>0);
- let byName={};let timed=[];a.forEach(w=>(w.drills||[]).forEach(d=>{if(!d.name?.trim())return;let k=d.name.trim().toLowerCase();let c=byName[k]||(byName[k]={name:d.name,meters:0,count:0});c.meters+=nz(d.distanceActual);c.count+=1;if(nz(d.distanceActual)>0&&parseTime(d.time)>0)timed.push({name:d.name,distance:nz(d.distanceActual),secs:parseTime(d.time),date:w.date});}));
+ let byName={};let timed=[];a.forEach(w=>(w.drills||[]).forEach(d=>{let label=swimDrillLabel(d);let k=label.toLocaleLowerCase('es');let c=byName[k]||(byName[k]={name:label,meters:0,count:0});c.meters+=nz(d.distanceActual);c.count+=1;if(nz(d.distanceActual)>0&&parseTime(d.time)>0)timed.push({name:label,distance:nz(d.distanceActual),secs:parseTime(d.time),date:w.date});}));
  return `<div class="two" style="margin-top:15px"><div class="card"><h2>Natación · evolución</h2><p class="help">Metros reales por sesión, calculados a partir de los ejercicios anotados por ti o de la distancia total.</p>${lineChart(data,'m')}<div class="meta">${a.length} sesiones completadas · ${fmtN(a.reduce((s,w)=>s+swimMeters(w),0),0)} m en total</div></div><div class="card"><h2>Ejercicios de piscina</h2><p class="help">Puedes registrar calentamiento, técnica, pull buoy, patada, series rápidas y cualquier trabajo que marque el profesor.</p>${Object.values(byName).length?Object.values(byName).sort((x,y)=>y.meters-x.meters).slice(0,10).map(x=>`<div class="listrow"><span>${esc(x.name)} <span class="meta">· ${x.count} veces</span></span><b>${fmtN(x.meters,0)} m</b></div>`).join(''):'<div class="emptystate">Añade ejercicios a una sesión de natación y marca sus distancias reales para verlos aquí.</div>'}${timed.length?`<div class="borderline"></div><h3>Mejores tramos por distancia</h3>${[...new Set(timed.map(x=>x.distance))].sort((a,b)=>a-b).map(d=>{let w=timed.filter(x=>x.distance===d).sort((a,b)=>a.secs-b.secs)[0];return `<div class="listrow"><div>${fmtN(d,0)} m <span class="meta">${esc(w.name)} · ${fmtDate(w.date)}</span></div><b>${timeFmt(w.secs)}</b></div>`}).join('')}`:''}</div></div>`;
 }
 function renderLeisureStats(){
@@ -368,13 +460,26 @@ function formatPaceKm(seconds){if(!Number.isFinite(seconds)||seconds<=0)return '
 function paceSeconds(x){const t=String(x??'').trim().replace(/\s*\/\s*km$/i,'');if(!t)return null;let match=t.match(/^(\d{1,2}):(\d{2})$/);if(!match||Number(match[2])>59)return null;let n=Number(match[1])*60+Number(match[2]);return n>0?n:null;}
 function paceFromInterval(v){const t=parseTime(v?.plannedTime),d=num(v?.distance);return t>0&&d>0?formatPaceKm(t*1000/d)+'/km':'—';}
 function realPaceFromInterval(v){const t=parseTime(v?.actualTime),d=num(v?.actualDistance)||num(v?.distance);return t>0&&d>0?formatPaceKm(t*1000/d)+'/km':'—';}
+// Serie por tiempo: objetivo en minutos/segundos y franja de ritmo permitida.
+function intervalTimed(it){return it?.mode==='time'||(it?.plannedDurationSec>0&&it?.mode!=='distance');}
+function runIntervalMode(w){return w?.intervalMode==='time'||(w?.intervals?.length&&w.intervals.every(intervalTimed))?'time':'distance';}
+function makeRunInterval(mode='distance'){
+ return mode==='time'?{id:id(),mode:'time',distance:null,plannedDurationSec:360,plannedTime:'6:00',targetPaceFast:'5:25',targetPaceSlow:'5:40',actualTime:'',actualDistance:null,restAuto:false,restSec:120,recoveryType:'walk',avgHr:null,maxHr:null,recoveryEndHr:null,rpe:null}:
+ {id:id(),mode:'distance',distance:400,plannedTime:'',actualTime:'',actualDistance:null,restAuto:true,restSec:recommendedRestSec(400),recoveryType:'walk',avgHr:null,maxHr:null,recoveryEndHr:null,rpe:null};
+}
+function effectiveRecoveryType(it){return ['walk','jog','stop'].includes(it?.recoveryType)?it.recoveryType:'walk';}
+function recoveryLabel(t){return ({walk:'Caminando',jog:'Trotando',stop:'Parado'})[t]||'No indicado';}
+function intervalRealPace(it){const d=num(it?.actualDistance),t=parseTime(it?.actualTime);return d>0&&t>0?formatPaceKm(t*1000/d)+'/km':null;}
+function timeIntervalPaceBand(it){return [it?.targetPaceFast,it?.targetPaceSlow].filter(Boolean).join('–');}
+function reportMetric(value,suffix=''){const n=num(value);return n===null?'Sin registrar':fmtN(n,0)+suffix;}
 function planWeekCount(m){return Math.max(1,Math.min(14,Math.ceil((diffDays(m.start,m.end)+1)/7)));}
 function planRowFromWorkout(w,day){
  const first=(w.intervals||[])[0],meters=first?num(first.distance)||400:400;
  const baseTime=first?parseTime(first.plannedTime):null;
  return {key:w.templateKey||id(),day,type:w.type,title:w.title||'',distance:num(w.cardio?.plannedDistance),pace:w.cardio?.plannedPace||'',
   reps:w.type==='run'?w.intervals?.length||0:0,meters,
-  targetPace:baseTime>0?formatPaceKm(baseTime*1000/meters):'',restSec:first?.restSec??recommendedRestSec(meters),restAuto:first?autoRestEnabled(first):true,
+  intervalMode:runIntervalMode(w),blockMinutes:first&&intervalTimed(first)?Math.round((num(first.plannedDurationSec)||parseTime(first.plannedTime)||360)/60*100)/100:6,paceFast:first?.targetPaceFast||'5:25',paceSlow:first?.targetPaceSlow||'5:40',
+  targetPace:baseTime>0&&meters>0?formatPaceKm(baseTime*1000/meters):'',restSec:first?.restSec??recommendedRestSec(meters),restAuto:first?autoRestEnabled(first):true,
   exercises:w.type==='gym'?clone(w.exercises||[]):[],drills:w.type==='swim'?clone(w.drills||[]):[],poolLength:w.poolLength||25,teacher:w.teacher||''};
 }
 function capturePlanFromWeek(m,wi){let rows=[];const start=addDays(m.start,wi*7),last=addDays(m.start,Math.min((wi+1)*7-1,diffDays(m.start,m.end)));
@@ -405,8 +510,10 @@ function autoRestEnabled(entry){
 }
 function targetForWeek(row,wi){const rules=editingWeekPlan?.weekly?.[wi]?.[row.key]||{};
  const meters=rules.meters??row.meters??400;
- const restAuto=rules.restAuto!==undefined?!!rules.restAuto:autoRestEnabled(row);
- return {reps:rules.reps??row.reps??0,meters,pace:rules.pace??row.targetPace??'',restAuto,
+ const mode=rules.intervalMode??row.intervalMode??'distance';
+ const restAuto=mode==='time'?false:(rules.restAuto!==undefined?!!rules.restAuto:autoRestEnabled(row));
+ return {reps:rules.reps??row.reps??0,meters,pace:rules.pace??row.targetPace??'',intervalMode:mode,
+  blockMinutes:rules.blockMinutes??row.blockMinutes??6,paceFast:rules.paceFast??row.paceFast??'5:25',paceSlow:rules.paceSlow??row.paceSlow??'5:40',restAuto,
   restSec:restAuto?recommendedRestSec(meters):(rules.restSec??row.restSec??recommendedRestSec(meters))};
 }
 function planWidget(value,label,field,key,style='text',extra=''){
@@ -417,11 +524,13 @@ function renderWeekPlanner(){const m=getMeso();if(!m)return '<div class="card">C
  const typ=PLAN_TYPES.map(([v,n])=>`<option value="${v}" ${v===r.type?'selected':''}>${n}</option>`).join('');
  const days=Array.from({length:7},(_,i)=>`<option value="${i}" ${r.day===i?'selected':''}>${weekDays[(asDate(m.start).getDay()+6+i)%7]}</option>`).join('');
  const series=r.type==='run'?`<div class="plan-series-mini">${planWidget(r.reps,'Series base','reps',r.key,'number','min="0" max="40" step="1"')}${planWidget(r.meters,'Metros/serie','meters',r.key,'number','min="1" max="10000" step="1"')}${planWidget(r.targetPace,'Ritmo base/km','targetPace',r.key,'text','placeholder="4:30"')}${planWidget(autoRestEnabled(r)?recommendedRestSec(r.meters):r.restSec,'Recup. base (s)','restSec',r.key,'number','min="0" max="1800" step="5"')}<label class="rest-auto-check"><input type="checkbox" data-plan-field="restAuto" data-key="${esc(r.key)}" ${autoRestEnabled(r)?'checked':''}> Auto según metros</label></div>`:'';
+ const timedCfg=r.type==='run'?`<div class="plan-time-fields"><label>Tipo de series</label><select data-plan-field="intervalMode" data-key="${esc(r.key)}"><option value="distance" ${r.intervalMode!=='time'?'selected':''}>Series por metros</option><option value="time" ${r.intervalMode==='time'?'selected':''}>Bloques por tiempo</option></select>${r.intervalMode==='time'?`<div class="grid3" style="margin-top:9px">${planWidget(r.blockMinutes??6,'Minutos por bloque','blockMinutes',r.key,'number','min="0.5" max="120" step="0.5"')}${planWidget(r.paceFast||'5:25','Ritmo rápido/km','paceFast',r.key)}${planWidget(r.paceSlow||'5:40','Ritmo lento/km','paceSlow',r.key)}</div><p class="help">Ejemplo: 3 × 6 min a 5:25–5:40/km. Descanso base editable en la fila superior.</p>`:''}</div>`:'';
+
  const descriptor=r.type==='padel'?'<span class="chip">Duración y pulso opcionales · Polar</span>':r.type==='walk'?'<span class="chip">Distancia y ritmo al importar Polar</span>':r.type==='gym'?`<span class="chip">${(r.exercises||[]).length} ejercicios de fuerza de la semana origen</span>`:r.type==='swim'?'<span class="chip">Ejercicios del profesor opcionales</span>':'';
- return `<div class="plan-row" data-key="${esc(r.key)}"><div class="plan-row-top"><select aria-label="Día" data-plan-field="day" data-key="${esc(r.key)}">${days}</select><select aria-label="Actividad" data-plan-field="type" data-key="${esc(r.key)}">${typ}</select><input aria-label="Título" data-plan-field="title" data-key="${esc(r.key)}" value="${esc(r.title)}" placeholder="Nombre de la sesión"><button class="small danger" type="button" data-action="weekplan-remove" data-key="${esc(r.key)}">Quitar</button></div><div class="plan-series-mini">${r.type==='padel'?'<span class="chip">Sin distancia objetivo obligatoria</span>':planWidget(r.distance,r.type==='swim'?'Metros previstos':['run','walk'].includes(r.type)?'Km previstos':'Objetivo (opcional)','distance',r.key,'number','min="0" step="0.1"')}${r.type==='padel'?'':planWidget(r.pace,'Ritmo continuo/km','pace',r.key,'text','placeholder="6:40"')}</div>${series}${descriptor}</div>`;
+ return `<div class="plan-row" data-key="${esc(r.key)}"><div class="plan-row-top"><select aria-label="Día" data-plan-field="day" data-key="${esc(r.key)}">${days}</select><select aria-label="Actividad" data-plan-field="type" data-key="${esc(r.key)}">${typ}</select><input aria-label="Título" data-plan-field="title" data-key="${esc(r.key)}" value="${esc(r.title)}" placeholder="Nombre de la sesión"><button class="small danger" type="button" data-action="weekplan-remove" data-key="${esc(r.key)}">Quitar</button></div><div class="plan-series-mini">${r.type==='padel'?'<span class="chip">Sin distancia objetivo obligatoria</span>':planWidget(r.distance,r.type==='swim'?'Metros previstos':['run','walk'].includes(r.type)?'Km previstos':'Objetivo (opcional)','distance',r.key,'number','min="0" step="0.1"')}${r.type==='padel'?'':planWidget(r.pace,'Ritmo continuo/km','pace',r.key,'text','placeholder="6:40"')}</div>${series}${timedCfg}${descriptor}</div>`;
  }).join('');
  const running=p.rows.filter(r=>r.type==='run');
- const progression=running.length?running.map(r=>`<div class="card" style="margin-bottom:12px"><h3>${esc(r.title)} <span class="muted">· ${weekDays[(asDate(m.start).getDay()+6+r.day)%7]}</span></h3><p class="help">Elige metros y ritmo para cada semana. «Auto» propone el descanso según la distancia (400 m: 90 s · 500–600 m: 120 s · 800 m: 150 s · 1.000 m: 180 s). Al escribir un descanso distinto se desactiva Auto para esa semana.</p><div class="table-scroll"><table class="week-targets"><thead><tr><th>Semana</th><th>Series</th><th>Metros por serie</th><th>Ritmo min/km</th><th>Descanso s</th><th>Auto</th><th>Tiempo objetivo</th></tr></thead><tbody>${Array.from({length:numWeeks},(_,wi)=>{let t=targetForWeek(r,wi),ti=paceSeconds(t.pace);const duration=t.reps>0&&ti&&t.meters>0?timeFmt(t.meters*ti/1000):'—';return `<tr><th>S${wi+1}<small>${fmtDate(addDays(m.start,wi*7))}</small></th>${['reps','meters','pace','restSec'].map((k)=>`<td><input aria-label="Semana ${wi+1} ${k}" data-week-field="${k}" data-wi="${wi}" data-key="${esc(r.key)}" type="${k==='pace'?'text':'number'}" min="0" step="${k==='restSec'?5:1}" value="${esc(t[k]??'')}"></td>`).join('')}<td><label class="rest-auto-check"><input type="checkbox" data-week-field="restAuto" data-wi="${wi}" data-key="${esc(r.key)}" ${t.restAuto?'checked':''}> Auto</label></td><td class="week-expected">${duration}</td></tr>`}).join('')}</tbody></table></div></div>`).join(''):'<div class="inline-note">Añade una actividad de carrera para configurar series semanales.</div>';
+ const progression=running.length?running.map(r=>`<div class="card" style="margin-bottom:12px"><h3>${esc(r.title)} <span class="muted">· ${weekDays[(asDate(m.start).getDay()+6+r.day)%7]}</span></h3><p class="help">Series por metros o bloques por minutos, con objetivos distintos en cada semana. Los descansos son editables.</p><div class="table-scroll"><table class="week-targets"><thead><tr><th>Semana</th><th>Reps.</th><th>${r.intervalMode==='time'?'Duración (min)':'Metros/serie'}</th><th>${r.intervalMode==='time'?'Ritmo rápido':'Ritmo min/km'}</th>${r.intervalMode==='time'?'<th>Ritmo lento</th>':''}<th>Descanso (s)</th>${r.intervalMode==='time'?'':'<th>Auto</th>'}<th>Objetivo</th></tr></thead><tbody>${Array.from({length:numWeeks},(_,wi)=>{let t=targetForWeek(r,wi),ti=paceSeconds(t.pace);const duration=t.reps>0&&ti&&t.meters>0?timeFmt(t.meters*ti/1000):'—';const timed=t.intervalMode==='time'; const fields=timed?['reps','blockMinutes','paceFast','paceSlow','restSec']:['reps','meters','pace','restSec'];return `<tr><th>S${wi+1}<small>${fmtDate(addDays(m.start,wi*7))}</small></th>${fields.map(k=>`<td><input aria-label="Semana ${wi+1} ${k}" data-week-field="${k}" data-wi="${wi}" data-key="${esc(r.key)}" type="${['pace','paceFast','paceSlow'].includes(k)?'text':'number'}" min="0" step="${k==='blockMinutes'?.5:k==='restSec'?5:1}" value="${esc(t[k]??'')}"></td>`).join('')}${timed?'':`<td><label class="rest-auto-check"><input type="checkbox" data-week-field="restAuto" data-wi="${wi}" data-key="${esc(r.key)}" ${t.restAuto?'checked':''}> Auto</label></td>`}<td class="week-expected">${timed?`${t.blockMinutes} min · ${esc(t.paceFast)}–${esc(t.paceSlow)}/km`:duration}</td></tr>`}).join('')}</tbody></table></div></div>`).join(''):'<div class="inline-note">Añade una actividad de carrera para configurar series semanales.</div>';
  return `${drawHead('Semana tipo y progresión','Diseña cada mesociclo por separado. Define la semana base y personaliza los intervalos de cada semana.',`<button class="small soft" data-tab="calendario">← Calendario</button>`)}
  <div id="weekPlanView"><div class="card"><div class="grid2"><div><label>Mesociclo</label><select id="weekPlanMeso">${db.mesocycles.map(x=>`<option value="${esc(x.id)}" ${x.id===m.id?'selected':''}>${esc(x.title)}</option>`).join('')}</select></div><div><label>Fechas</label><div class="plan-period">${fmtDate(m.start)} — ${fmtDate(m.end)} · ${numWeeks} semanas</div></div></div><div class="inline-note">Puedes editar la distribución directamente aquí, o modificar los ejercicios detallados en el calendario y después <b>capturar esa semana</b>. Las sesiones realizadas y las lecturas Polar no se sustituyen.</div><div class="row" style="margin-top:12px"><label style="margin:0">Tomar una semana existente como base: <select id="weekCaptureSelect">${Array.from({length:numWeeks},(_,i)=>`<option value="${i}" ${captureWeekIndex===i?'selected':''}>Semana ${i+1}</option>`).join('')}</select></label><button class="soft small" data-action="weekplan-capture">Usar esta semana como plantilla</button></div></div>
  <div class="sectionhead"><h3>1 · Actividades que se repiten cada semana</h3><button class="small soft" type="button" data-action="weekplan-add">＋ Añadir actividad</button></div><div class="card" style="margin-bottom:16px">${gridItems||'<div class="emptystate">No hay actividades. Pulsa «Añadir actividad» para empezar.</div>'}<button class="small soft" type="button" data-action="weekplan-add">＋ Añadir actividad</button></div>
@@ -434,7 +543,7 @@ function planFieldChange(el){const p=ensurePlanDraft();if(!p)return;
   const row=p.rows.find(x=>x.key===key);if(!row)return;
   const oldType=row.type,oldTitle=row.title,previousAuto=autoRestEnabled(row);
   if(field==='restAuto')row.restAuto=el.checked;
-  else row[field]=['day','reps','meters','restSec','distance'].includes(field)?num(el.value):el.value;
+  else row[field]=['day','reps','meters','restSec','distance','blockMinutes'].includes(field)?num(el.value):el.value;
   if(field==='day')row.day=Math.max(0,Math.min(6,Math.round(row.day||0)));
   if(field==='restSec'){
    row.restAuto=false;
@@ -444,6 +553,7 @@ function planFieldChange(el){const p=ensurePlanDraft();if(!p)return;
    row.restAuto=true;row.restSec=recommendedRestSec(row.meters);
    const rest=el.closest('.plan-series-mini')?.querySelector('[data-plan-field="restSec"]');if(rest)rest.value=row.restSec;
   }
+  if(field==='intervalMode')render();
   if(field==='type'){
    const genericTitles=['Movilidad / Descanso','Descanso / movilidad','Otro / recuperación','Natación','Piscina','Gimnasio','Carrera','Caminata','Pádel'];
    if(genericTitles.includes(oldTitle)||oldTitle===typeLabel(oldType))row.title=({gym:'Gimnasio · fuerza',run:'Carrera',swim:'Natación',walk:'Caminata',padel:'Pádel',test:'Pruebas físicas',other:'Descanso / movilidad'})[row.type]||oldTitle;
@@ -455,21 +565,21 @@ function planFieldChange(el){const p=ensurePlanDraft();if(!p)return;
   const rules=p.weekly[wi][key],row=p.rows.find(x=>x.key===key);
   if(!row)return;
   const before=targetForWeek(row,wi);
-  rules[weekField]=weekField==='pace'?el.value:weekField==='restAuto'?el.checked:num(el.value);
+  rules[weekField]=['pace','paceFast','paceSlow'].includes(weekField)?el.value:weekField==='restAuto'?el.checked:num(el.value);
   if(weekField==='restSec'){rules.restAuto=false;
    const toggle=el.closest('tr')?.querySelector('[data-week-field="restAuto"]');if(toggle)toggle.checked=false;
   }
   if((weekField==='meters'&&before.restAuto)||(weekField==='restAuto'&&rules.restAuto)){rules.restAuto=true;rules.restSec=recommendedRestSec(targetForWeek(row,wi).meters);}
   const tr=el.closest('tr'),t=targetForWeek(row,wi);
   if(tr){
-   const pace=paceSeconds(t.pace),duration=t.reps>0&&pace&&t.meters>0?timeFmt(t.meters*pace/1000):'—';
+   const pace=paceSeconds(t.pace),duration=t.intervalMode==='time'?`${t.blockMinutes} min · ${t.paceFast}–${t.paceSlow}/km`:t.reps>0&&pace&&t.meters>0?timeFmt(t.meters*pace/1000):'—';
    const expected=tr.querySelector('.week-expected');if(expected)expected.textContent=duration;
    const rest=tr.querySelector('[data-week-field="restSec"]');if(rest&&t.restAuto)rest.value=t.restSec;
   }
  }
 }
 function planAddRow(){const m=getMeso(),p=ensurePlanDraft();if(!m||!p)return;
- p.rows.push({key:id(),day:0,type:'other',title:'Movilidad / Descanso',distance:null,pace:'',reps:0,meters:400,targetPace:'',restSec:90,restAuto:true,exercises:[],drills:[],poolLength:25,teacher:''});render();}
+ p.rows.push({key:id(),day:0,type:'other',title:'Movilidad / Descanso',distance:null,pace:'',reps:0,meters:400,targetPace:'',restSec:90,restAuto:true,intervalMode:'distance',blockMinutes:6,paceFast:'5:25',paceSlow:'5:40',exercises:[],drills:[],poolLength:25,teacher:''});render();}
 function planRemoveRow(key){const p=ensurePlanDraft();if(!p)return;const old=p.rows.find(x=>x.key===key);if(!old)return;
  if(!confirm('¿Quitar '+old.title+' de la semana tipo? Los entrenamientos ya realizados no se borrarán.'))return;
  p.rows=p.rows.filter(x=>x.key!==key);for(let rules of Object.values(p.weekly))delete rules[key];render();}
@@ -477,7 +587,7 @@ function planCaptureWeek(){const m=getMeso();if(!m)return;const old=editingWeekP
  editingWeekPlan=capturePlanFromWeek(m,captureWeekIndex);editingWeekPlanMesoId=m.id;render();toast('Semana capturada. Ajusta los objetivos y pulsa Guardar y aplicar.');}
 function planHasActual(w){if(w.done||w.polarSourceId||String(w.note||'').trim())return true;if(gymProgress(w).done>0||swimProgress(w).done>0)return true;
  if(parseTime(w.cardio?.duration)>0||num(w.cardio?.distance)>0)return true;
- return (w.intervals||[]).some(x=>parseTime(x.actualTime)>0||num(x.actualDistance)>0)||(w.drills||[]).some(x=>num(x.distanceActual)>0);
+ return (w.intervals||[]).some(x=>parseTime(x.actualTime)>0||num(x.actualDistance)>0||num(x.avgHr)!==null||num(x.rpe)!==null)||(w.drills||[]).some(x=>num(x.distanceActual)>0);
 }
 function isOldDefaultPlan(w){if(w.templateKey)return true;
  return /^(Piscina dirigida|Piscina libre|Gimnasio ·|Carrera Z2|Carrera continua|Rodaje continuo|Series de carrera|Descanso|Movilidad|Test 2 km|\d+\s*[×x]\s*\d+)/i.test(w.title||'');}
@@ -486,22 +596,30 @@ function workoutFromPlan(row,date,m,wi){const w=newWorkout(date,row.type,m.id);w
  if(row.type==='gym'&&Array.isArray(row.exercises)&&row.exercises.length)w.exercises=clone(row.exercises).map(ex=>({...ex,id:id(),completed:false,sets:(ex.sets||[]).map(st=>({...st,actualKg:null,actualReps:null,rir:null}))}));
  if(row.type==='swim'){w.poolLength=row.poolLength||25;w.teacher=row.teacher||'';w.drills=clone(row.drills||[]).map(d=>({...d,id:id(),completed:false,distanceActual:null,time:''}));}
  if(row.type==='run'){let targets=targetForWeek(row,wi),reps=Math.max(0,Math.min(40,Math.round(num(targets.reps)||0))),metres=num(targets.meters)||400,pace=paceSeconds(targets.pace);
-  w.intervals=Array.from({length:reps},()=>({id:id(),distance:metres,plannedTime:pace?timeFmt(pace*metres/1000):'',actualTime:'',actualDistance:null,restAuto:targets.restAuto,restSec:num(targets.restSec)??recommendedRestSec(metres)}));
-  if(reps>0){let baseTitle=row.title||'Series de carrera';w.title=/^\d+\s*[×x]\s*\d+\s*m\b/i.test(baseTitle)?baseTitle.replace(/^\d+\s*[×x]\s*\d+\s*m\b/i,`${reps} × ${metres} m`):`${reps} × ${metres} m · ${baseTitle}`;w.cardio.plannedPace=targets.pace?targets.pace+'/km':'';}
+  w.intervalMode=targets.intervalMode==='time'?'time':'distance';
+  if(w.intervalMode==='time'){
+   const duration=Math.round((num(targets.blockMinutes)||6)*60);
+   w.intervals=Array.from({length:reps},()=>({...makeRunInterval('time'),plannedDurationSec:duration,plannedTime:timeFmt(duration),targetPaceFast:targets.paceFast,targetPaceSlow:targets.paceSlow,restSec:Math.round(num(targets.restSec)??120)}));
+   if(reps>0){w.title=`${reps} × ${fmtN(duration/60,1)} min · ${row.title||'Bloques por tiempo'}`;w.cardio.plannedPace=`${targets.paceFast}–${targets.paceSlow}/km`;}
+  }else{
+   w.intervals=Array.from({length:reps},()=>({...makeRunInterval('distance'),distance:metres,plannedTime:pace?timeFmt(pace*metres/1000):'',restAuto:targets.restAuto,restSec:num(targets.restSec)??recommendedRestSec(metres)}));
+   if(reps>0){let baseTitle=row.title||'Series de carrera';w.title=/^\d+\s*[×x]\s*\d+\s*m\b/i.test(baseTitle)?baseTitle.replace(/^\d+\s*[×x]\s*\d+\s*m\b/i,`${reps} × ${metres} m`):`${reps} × ${metres} m · ${baseTitle}`;w.cardio.plannedPace=targets.pace?targets.pace+'/km':'';}
+  }
  }
  return w;
 }
 function planCopyGoals(dest,planned){
  dest.title=planned.title;dest.templateKey=planned.templateKey;dest.planWeek=planned.planWeek;dest.cardio??={};dest.cardio.plannedDistance=planned.cardio.plannedDistance;dest.cardio.plannedPace=planned.cardio.plannedPace;
- if(dest.type==='run')dest.intervals=planned.intervals;
+ if(dest.type==='run'){dest.intervals=planned.intervals;dest.intervalMode=planned.intervalMode;}
  if(dest.type==='gym')dest.exercises=planned.exercises;
  if(dest.type==='swim'){dest.teacher=planned.teacher;dest.poolLength=planned.poolLength;dest.drills=planned.drills;}
 }
 function planSave(apply){const m=getMeso(),p=ensurePlanDraft();if(!m||!p)return;
  if(p.rows.some(r=>r.day===null||r.day<0||r.day>6||!r.title?.trim()))return toast('Revisa los días y los nombres de las actividades.',true);
  for(const r of p.rows.filter(x=>x.type==='run'))for(let wi=0;wi<planWeekCount(m);wi++){
-  const t=targetForWeek(r,wi);if(t.reps>40||t.reps<0||t.meters<=0||t.meters>10000||t.restSec<0||t.restSec>1800)return toast('Revisa las series, metros y descansos de la progresión.',true);
-  if(t.reps>0&&!paceSeconds(t.pace))return toast(`Indica un ritmo válido (ej. 4:30) para la semana ${wi+1} de ${r.title}.`,true);
+  const t=targetForWeek(r,wi);if(t.reps>40||t.reps<0||(t.intervalMode!=='time'&&(t.meters<=0||t.meters>10000))||t.restSec<0||t.restSec>1800)return toast('Revisa las series, metros y descansos de la progresión.',true);
+  if(t.intervalMode==='time'){if(!(t.blockMinutes>0&&t.blockMinutes<=120)||!paceSeconds(t.paceFast)||!paceSeconds(t.paceSlow)||paceSeconds(t.paceFast)>paceSeconds(t.paceSlow))return toast(`Revisa duración y franja de ritmo de S${wi+1} en ${r.title}.`,true);}
+  else if(t.reps>0&&!paceSeconds(t.pace))return toast(`Indica un ritmo válido (ej. 4:30) para la semana ${wi+1} de ${r.title}.`,true);
  }
  if(!apply){m.weekPlan=clone(p);persist();render();toast('Semana tipo y progresión guardadas en este mesociclo.');return;}
  const doneCount=db.workouts.filter(w=>w.mesoId===m.id&&planHasActual(w)).length;
@@ -551,7 +669,7 @@ function renderStats(){let c=calc(),rec=gymRecords(),keys=Object.keys(rec).sort(
  let runners=c.run.filter(w=>nz(w.cardio?.distance)>0&&parseTime(w.cardio?.duration)>0).sort((a,b)=>a.date.localeCompare(b.date));let paceData=runners.map(w=>({date:w.date,y:parseTime(w.cardio.duration)/nz(w.cardio.distance)/60}));
  let zones={Z1:0,Z2:0,Z3:0,Z4:0,Z5:0,Z6:0};c.run.forEach(w=>Object.keys(zones).forEach(z=>zones[z]+=nz(w.cardio?.zoneMins?.[z])));
  let zoneTotal=Object.values(zones).reduce((a,b)=>a+b,0);let tests=testRecords();let bests={run2k:bestOf(tests.map(t=>t.run2k).concat(c.run.filter(w=>Math.abs(nz(w.cardio?.distance)-2)<.02).map(w=>parseTime(w.cardio?.duration))),'min'),pushups:bestOf(tests.map(t=>t.pushups),'max'),plank:bestOf(tests.map(t=>t.plank),'max'),agility:bestOf(tests.map(t=>t.agility),'min'),swim50:bestOf(tests.map(t=>t.swim50),'min')};
- let ivals=c.run.flatMap(w=>(w.intervals||[]).map(s=>({...s,date:w.date,secs:parseTime(s.actualTime)}))).filter(x=>x.distance>0&&x.secs>0);let ivalGroups={};ivals.forEach(s=>{let k=s.distance; if(!ivalGroups[k]||s.secs<ivalGroups[k].secs)ivalGroups[k]=s});
+ let ivals=c.run.flatMap(w=>(w.intervals||[]).map(s=>({...s,date:w.date,secs:parseTime(s.actualTime)}))).filter(x=>!intervalTimed(x)&&x.distance>0&&x.secs>0);let ivalGroups={};ivals.forEach(s=>{let k=s.distance; if(!ivalGroups[k]||s.secs<ivalGroups[k].secs)ivalGroups[k]=s});
  let topExercise=isTimedStat?[...selectedSets].sort((a,b)=>b.reps-a.reps)[0]||null:([ ...selectedSets].filter(s=>s.e1rm!=null).sort((a,b)=>b.e1rm-a.e1rm)[0]||[...selectedSets].filter(s=>s.kg>0).sort((a,b)=>b.kg-a.kg)[0]||null);
  let gymWithData=db.workouts.filter(w=>w.type==='gym'&&(w.exercises||[]).some(e=>(e.sets||[]).some(st=>num(st.actualReps)>0)));
  return `${drawHead('Estadísticas y récords','Se calculan únicamente con los datos reales que registres.')}
@@ -685,7 +803,7 @@ function renderReports(){const meso=db.mesocycles||[];return `${drawHead('Inform
   <div class="card"><h2>Informe mensual</h2><p class="help">Consolidado del mes natural, con volumen, marcas y recuperación.</p><label for="pdfMonthDate">Mes</label><input id="pdfMonthDate" type="month" value="${today().slice(0,7)}"><button class="primary" data-action="pdf-month">↓ Descargar PDF mensual</button><button class="small" data-action="pdf-check-month">Comprobar datos</button></div>
   <div class="card"><h2>Informe de mesociclo</h2><p class="help">El bloque completo, incluidas sesiones terminadas y pendientes.</p><label for="pdfMeso">Mesociclo</label><select id="pdfMeso">${meso.map(m=>`<option value="${esc(m.id)}" ${m.id===getMeso()?.id?'selected':''}>${esc(m.title)}</option>`).join('')}</select><button class="primary" data-action="pdf-meso">↓ Descargar PDF del mesociclo</button><button class="small" data-action="pdf-check-meso">Comprobar datos</button></div>
  </div>
- <div class="card" style="margin-top:15px"><h2>Qué contiene cada PDF</h2><p class="help" style="margin-top:10px">Resumen ejecutivo con indicadores y gráfico de cumplimiento, diario de sesiones con estado REAL, ejercicios de gimnasio hechos/pendientes y sus series guardadas, mejores cargas, carrera, piscina y métricas de Polar disponibles.</p><div class="inline-note">Los informes incluyen únicamente datos que realmente tengas guardados. Cuando la FC nocturna proviene de muestras de 5 minutos, se señala con ≈ para distinguirla de una mínima introducida manualmente. No se enviará ningún dato a un servicio de PDF externo.</div></div>`;
+ <div class="card" style="margin-top:15px"><h2>Qué contiene cada PDF</h2><p class="help" style="margin-top:10px">Resumen ejecutivo con indicadores y gráfico de cumplimiento, diario de sesiones con estado REAL, ejercicios de gimnasio hechos/pendientes y sus series guardadas, mejores cargas, carrera, piscina y métricas de Polar disponibles, FC por serie, RPE, molestias, calentamiento, vuelta a la calma y tipo de recuperación.</p><div class="inline-note">Los informes incluyen únicamente datos que realmente tengas guardados. Cuando la FC nocturna proviene de muestras de 5 minutos, se señala con ≈ para distinguirla de una mínima introducida manualmente. No se enviará ningún dato a un servicio de PDF externo.</div></div>`;
 }
 function pdfTextEsc(value){
  const normalized=String(value??'').normalize('NFC').replace(/[\n\r\t]+/g,' ')
@@ -823,11 +941,19 @@ function exportReportPdf(scope){
    const dist=['run','walk'].includes(w.type)&&num(c.distance)!==null?fmtN(c.distance,2)+' km':w.type==='swim'&&swimMeters(w)>0?fmtN(swimMeters(w),0)+' m':'';
    const detail=[dist,c.duration?'Duración '+c.duration:'',num(c.avgHr)!==null?'FC media '+fmtN(c.avgHr,0):''].filter(Boolean).join('  |  ');
    if(detail)items.push({kind:'item',text:detail});
-   if(w.type==='run')for(const [i,it] of (w.intervals||[]).entries()){
-    const n=['Serie '+(i+1),num(it.distance)>0?it.distance+' m':'',it.plannedTime?'objetivo '+it.plannedTime:'',it.actualTime?'real '+it.actualTime:'',num(it.actualDistance)>0?'real '+fmtN(it.actualDistance,0)+' m':''].filter(Boolean);
-    if(n.length>1)items.push({kind:'set',text:n.join('  |  ')});
+   if(w.type==='run'){
+    const metrics=[`Calentamiento: ${reportMetric(w.warmupMin,' min')}`,`Vuelta a la calma: ${reportMetric(w.cooldownMin,' min')}`,`RPE sesión: ${reportMetric(w.effort,'/10')}`,`Molestias musculares: ${reportMetric(w.muscleDiscomfort,'/10')}`];
+    items.push({kind:'item',text:metrics.join('  |  ')});
+    for(const [i,it] of (w.intervals||[]).entries()){
+     const timed=intervalTimed(it);
+     const goal=timed?'objetivo '+(it.plannedTime||'—')+' a '+(timeIntervalPaceBand(it)||'—')+'/km':`${num(it.distance)||'—'} m | objetivo ${it.plannedTime||'—'}`;
+     const real=['real '+(it.actualTime||'—'),num(it.actualDistance)>0?fmtN(it.actualDistance,0)+' m':'metros s/d',intervalRealPace(it)||'ritmo s/d'].join(' | ');
+     items.push({kind:'set',text:`${timed?'Bloque':'Serie'} ${i+1} · ${goal} · ${real}`});
+     items.push({kind:'set',text:`FC media ${reportMetric(it.avgHr,' ppm')} · FC máxima ${reportMetric(it.maxHr,' ppm')} · FC fin recup. ${reportMetric(it.recoveryEndHr,' ppm')}`});
+     items.push({kind:'set',text:`Recuperación: ${num(it.restSec)===null?'sin duración':fmtN(it.restSec,0)+' s'} · ${recoveryLabel(it.recoveryType)} · RPE serie: ${reportMetric(it.rpe,'/10')}`});
+    }
    }
-   if(w.type==='swim')for(const d of w.drills||[]){if(d.name)items.push({kind:'set',text:d.name+' | '+(num(d.distanceActual)!==null?'real '+fmtN(d.distanceActual,0)+' m':'objetivo '+fmtN(d.distancePlan,0)+' m')});}
+   if(w.type==='swim')for(const d of w.drills||[]){items.push({kind:'set',text:swimDrillLabel(d)+' | '+(num(d.distanceActual)!==null?'real '+fmtN(d.distanceActual,0)+' m':'objetivo '+fmtN(d.distancePlan,0)+' m')});}
   }
  }
  items.push({kind:'section',text:'Récords de fuerza del período'});
@@ -871,10 +997,10 @@ function renderGym(){
  let exercises=draft.exercises||[];
  let b=exercises.map((ex,i)=>{
   let exDone=gymExerciseDone(ex),setCount=recordedGymSeries(ex),timed=isTimedGymExercise(ex);
-  let record=gymRecords()[String(ex.name||'').toLowerCase().trim()], prev=record?.sets?.sort((x,y)=>y.date.localeCompare(x.date))[0];
+  let prev=lastGymActual(ex.name,draft.date,draft.id);
   return `<div class="exercise ${exDone?'exercise-completed':''}"><div class="exercisehead"><div><b>Ejercicio ${i+1}</b><div class="meta">${setCount}/${(ex.sets||[]).length} series anotadas</div></div><div class="row"><label class="exercise-done"><input type="checkbox" data-path="exercises.${i}.completed" ${exDone?'checked':''}> ${exDone?'✓ Hecho':'Marcar hecho'}</label><button class="small soft" data-action="copy-gym-ex" data-i="${i}" type="button">Copiar plan → real</button><button class="small danger" data-action="remove-exercise" data-i="${i}" type="button">Eliminar</button></div></div>
-  <div class="grid3" style="margin-bottom:11px">${field('Nombre','exercises.'+i+'.name',ex.name,'text','list="exerciseNames"')}${timed?'<div class="formfield"><label>Unidad</label><div class="inline-note">Segundos · sin peso</div></div>':selectField('Unidad de esfuerzo','exercises.'+i+'.unit',ex.unit||'reps',[['reps','Repeticiones'],['s','Segundos']])}${field('Descanso entre series (s)','exercises.'+i+'.restSec',ex.restSec,'number','min="0" step="1"')}</div>
-  ${prev?`<div class="help" style="margin-bottom:10px">Última serie registrada: ${fmtDate(prev.date)} · ${timed?fmtN(prev.reps,0)+' s':fmtN(prev.kg,1)+' kg × '+fmtN(prev.reps,0)+' rep.'}</div>`:''}
+  <div class="grid3" style="margin-bottom:11px">${gymNamePicker(ex,i)}${timed?'<div class="formfield"><label>Unidad</label><div class="inline-note">Segundos · sin peso</div></div>':selectField('Unidad de esfuerzo','exercises.'+i+'.unit',ex.unit||'reps',[['reps','Repeticiones'],['s','Segundos']])}${field('Descanso entre series (s)','exercises.'+i+'.restSec',ex.restSec,'number','min="0" step="1"')}</div>
+  <div class="last-gym-load">${prev?`Última serie REAL anterior: <b>${fmtDate(prev.date)} · ${timed?fmtN(prev.reps,0)+' s':fmtN(prev.kg,1)+' kg × '+fmtN(prev.reps,0)+' rep.'}</b><button type="button" class="small" data-action="use-last-gym" data-i="${i}">${timed?'Usar como objetivo (s)':'Usar último peso como objetivo'}</button>`:'No hay una carga real anterior registrada para este ejercicio. Al guardar «Real kg» y «Real reps» quedará disponible para las próximas sesiones.'}</div>
   ${timed?`<div class="help">Solo registra el tiempo aguantado en cada serie, en segundos (por ejemplo, 40, 45 o 52). No hay peso ni RIR.</div>
   <div class="table-scroll"><div class="sets sets-timed" style="min-width:300px"><div class="sethead"><div class="columnname">Serie</div><div class="columnname">Objetivo (s)</div><div class="columnname">Real (s)</div><div></div></div>
   ${(ex.sets||[]).map((st,j)=>`<div class="setrow"><div class="setnumber">${j+1}</div>
@@ -893,30 +1019,42 @@ function renderGym(){
   </div>`;}).join('');
  const pg=gymProgress(draft);
  return `<div class="inline-note"><b>Gimnasio · ${pg.done}/${pg.total} ejercicios hechos.</b> Marca ✓ en cada ejercicio al terminarlo, aunque no apuntes las cargas. También puedes anotar tus pesos, repeticiones y RIR. Guarda el progreso cuando quieras; la sesión sigue pendiente hasta completarla.</div><div class="progress" style="margin:12px 0 16px"><i style="width:${pg.total?Math.round(pg.done/pg.total*100):0}%"></i></div>
- ${b}<datalist id="exerciseNames">${EX.map(e=>`<option value="${esc(e.name)}"></option>`).join('')}</datalist>
+ ${b}
  <div class="row" style="margin-top:12px"><button class="soft" data-action="add-exercise" type="button">＋ Añadir ejercicio</button><button data-action="copy-gym-all" type="button">Copiar toda la planificación a resultados</button></div>`;
 }
 function renderRun(){const c=draft.cardio||{},intervals=draft.intervals||[];
  const secs=parseTime(c.duration),kms=num(c.distance),pace=(kms>0&&secs>0)?formatPaceKm(secs/kms):null;
- const paceBadge=pace?`<div class="inline-note"><b>Datos reales de la sesión:</b> ${fmtN(kms,2)} km · ${esc(c.duration)} · <b>${pace}/km</b>${draft.polarSourceId?' · importado de Polar':''}. Este promedio incluye las recuperaciones si están dentro del entrenamiento.</div>`:'';
- const polarLapInfo=draft.polarSourceId?`<p class="help">Vueltas Polar detectadas: ${(draft.polarLaps||[]).length}. Si hay vueltas individuales que coinciden con las series previstas, se completan sus metros y tiempos. Si el reloj solo ofrece la sesión completa, se conserva el ritmo promedio; las repeticiones siguen editables.</p>`:'';
-
- let zone=Object.entries(c.zoneMins||{Z1:null,Z2:null,Z3:null,Z4:null,Z5:null,Z6:null}).map(([z,v])=>field(z+' (min)','cardio.zoneMins.'+z,v,'number','min="0" step="0.1"')).join('');
- return `${paceBadge}<div class="grid3">${field('Distancia prevista (km)','cardio.plannedDistance',c.plannedDistance,'number','min="0" step="0.01"')}${field('Ritmo objetivo (min/km)','cardio.plannedPace',c.plannedPace,'text','placeholder="4:30/km"')}${field('Distancia real (km)','cardio.distance',c.distance,'number','min="0" step="0.01"')}${field('Tiempo real (mm:ss o hh:mm:ss)','cardio.duration',c.duration,'text','placeholder="38:29"')}${field('FC media (ppm)','cardio.avgHr',c.avgHr,'number','min="0" max="240"')}${field('FC máxima (ppm)','cardio.maxHr',c.maxHr,'number','min="0" max="240"')}</div>
- <div class="borderline"></div><div class="sectionhead"><h3>Series / intervalos</h3><button type="button" class="soft small" data-action="add-interval">＋ Serie</button></div>
- <div class="help">Cada serie tiene metros y tiempo objetivo propios. El ritmo se calcula por repetición; cuando Polar facilita vueltas, la importación puede completar los valores reales automáticamente. <b>Descanso automático orientativo:</b> 200 m → 60 s, 400 m → 90 s, 500–600 m → 120 s, 800 m → 150 s y 1.000 m → 180 s. Puedes desactivar «Auto» y cambiarlo.</div>${polarLapInfo}
- ${intervals.length?`<div class="table-scroll"><div style="min-width:700px;margin-top:10px">${intervals.map((s,i)=>`<div class="interval"><b>${i+1}.</b>${field('Metros','intervals.'+i+'.distance',s.distance,'number','min="0" step="1"')}${field('Objetivo','intervals.'+i+'.plannedTime',s.plannedTime,'text','placeholder="1:50"')}${field('Real','intervals.'+i+'.actualTime',s.actualTime,'text','placeholder="1:46"')}${field('Real m','intervals.'+i+'.actualDistance',s.actualDistance,'number','min="0" step="0.1"')}<div class="interval-rest">${field('Rec. (s)','intervals.'+i+'.restSec',autoRestEnabled(s)?recommendedRestSec(s.distance):s.restSec,'number','min="0" step="5"')}<label class="rest-auto-check"><input type="checkbox" data-path="intervals.${i}.restAuto" ${autoRestEnabled(s)?'checked':''}> Auto</label></div><button type="button" class="danger small icononly" data-action="remove-interval" data-i="${i}" aria-label="Eliminar serie">×</button></div>`).join('')}</div></div>`:'<div class="help" style="margin:12px 0">Sin series configuradas. Puedes registrar una carrera continua solamente con distancia y tiempo.</div>'}
- <div class="borderline"></div><h3>Tiempo por zonas cardíacas</h3><div class="grid3">${zone}</div><p class="help">Introduce minutos, no porcentajes. Las zonas se acumulan para obtener estadísticas de carga aeróbica.</p>`;
+ const paceBadge=pace?`<div class="inline-note"><b>Datos reales:</b> ${fmtN(kms,2)} km · ${esc(c.duration)} · ${pace}/km${draft.polarSourceId?' · Polar':''}. El promedio puede incluir descansos.</div>`:'';
+ const mode=runIntervalMode(draft);
+ const polarLapInfo=draft.polarSourceId?`<p class="help">Vueltas Polar disponibles: ${(draft.polarLaps||[]).length}. Solo se completan repeticiones cuando las vueltas coinciden de forma inequívoca. La FC por vuelta depende de los datos TCX.</p>`:'';
+ const zones=Object.entries(c.zoneMins||{Z1:null,Z2:null,Z3:null,Z4:null,Z5:null,Z6:null}).map(([z,v])=>field(z+' (min)','cardio.zoneMins.'+z,v,'number','min="0" step="0.1"')).join('');
+ return `${paceBadge}<div class="grid3">${field('Distancia prevista (km)','cardio.plannedDistance',c.plannedDistance,'number','min="0" step="0.01"')}${field('Ritmo objetivo (min/km)','cardio.plannedPace',c.plannedPace,'text')}${field('Distancia real (km)','cardio.distance',c.distance,'number','min="0" step="0.01"')}${field('Tiempo total (mm:ss o hh:mm:ss)','cardio.duration',c.duration,'text')}${field('FC media de sesión (ppm)','cardio.avgHr',c.avgHr,'number','min="0" max="240"')}${field('FC máxima de sesión (ppm)','cardio.maxHr',c.maxHr,'number','min="0" max="240"')}</div>
+ <div class="borderline"></div><h3>Preparación y sensaciones</h3><div class="grid4">${field('Calentamiento (min)','warmupMin',draft.warmupMin,'number','min="0" max="180" step="0.5"')}${field('Vuelta a la calma (min)','cooldownMin',draft.cooldownMin,'number','min="0" max="180" step="0.5"')}${field('RPE sesión (1–10)','effort',draft.effort,'number','min="1" max="10" step="1"')}${field('Molestias musculares (0–10)','muscleDiscomfort',draft.muscleDiscomfort,'number','min="0" max="10" step="1"')}</div>
+ <div class="borderline"></div><div class="sectionhead"><h3>Series de carrera</h3><div class="row"><button type="button" class="soft small" data-action="add-interval">＋ Añadir serie</button><button type="button" class="small" data-action="run-3x6-example">Ejemplo: 3 × 6 min</button></div></div>
+ <div class="run-mode-choice"><span class="help">Tipo de entrenamiento:</span><button type="button" class="${mode==='distance'?'primary':'small'}" data-action="run-mode-distance">Por distancia (400 m, 500 m…)</button><button type="button" class="${mode==='time'?'primary':'small'}" data-action="run-mode-time">Por tiempo (3 × 6 min…)</button></div>
+ <p class="help">Ritmo real calculado a partir de metros y tiempo reales. Pulsaciones de cada serie y de la recuperación solo si Polar las entrega o si las anotas manualmente. ${mode==='time'?'Define duración y ritmo rápido/lento por cada bloque.':'Descansos orientativos por metros con opción Auto.'}</p>${polarLapInfo}
+ ${intervals.length?intervals.map((iv,i)=>`<div class="interval-card-v39"><h4><span>${mode==='time'?'Bloque':'Serie'} ${i+1}</span><button type="button" class="danger small" data-action="remove-interval" data-i="${i}">Eliminar</button></h4>
+ ${mode==='time'?`<div class="grid3">${field('Duración objetivo (mm:ss)',`intervals.${i}.plannedTime`,iv.plannedTime||'6:00','text','placeholder="6:00"')}${field('Ritmo rápido (/km)',`intervals.${i}.targetPaceFast`,iv.targetPaceFast||'5:25','text','placeholder="5:25"')}${field('Ritmo lento (/km)',`intervals.${i}.targetPaceSlow`,iv.targetPaceSlow||'5:40','text','placeholder="5:40"')}</div>`:`<div class="grid2">${field('Metros objetivo',`intervals.${i}.distance`,iv.distance,'number','min="0" step="1"')}${field('Tiempo objetivo',`intervals.${i}.plannedTime`,iv.plannedTime,'text','placeholder="1:48"')}</div>`}
+ <div class="grid4">${field('Tiempo real',`intervals.${i}.actualTime`,iv.actualTime,'text','placeholder="6:03"')}${field('Metros reales',`intervals.${i}.actualDistance`,iv.actualDistance,'number','min="0" step="0.1"')}${field('Recuperación (s)',`intervals.${i}.restSec`,mode==='distance'&&autoRestEnabled(iv)?recommendedRestSec(iv.distance):iv.restSec,'number','min="0" max="1800" step="5"')}${selectField('Tipo de recuperación',`intervals.${i}.recoveryType`,effectiveRecoveryType(iv),[['walk','Caminando'],['jog','Trotando'],['stop','Parado']])}</div>
+ ${mode==='distance'?`<label class="rest-auto-check" style="margin-bottom:12px"><input type="checkbox" data-path="intervals.${i}.restAuto" ${autoRestEnabled(iv)?'checked':''}> Descanso automático según metros</label>`:''}
+ <div class="grid4">${field('FC media serie (ppm)',`intervals.${i}.avgHr`,iv.avgHr,'number','min="0" max="240"')}${field('FC máxima serie (ppm)',`intervals.${i}.maxHr`,iv.maxHr,'number','min="0" max="240"')}${field('FC fin recuperación (ppm)',`intervals.${i}.recoveryEndHr`,iv.recoveryEndHr,'number','min="0" max="240"')}${field('RPE serie (1–10)',`intervals.${i}.rpe`,iv.rpe,'number','min="1" max="10"')}</div>
+ <p class="help">Ritmo real: <b>${intervalRealPace(iv)||'Pendiente de datos'}</b>${mode==='time'?` · Objetivo: ${esc(timeIntervalPaceBand(iv))}/km`:''}${iv.polarLap?' · Parcial detectado en Polar':''}</p></div>`).join(''):'<div class="help">No hay intervalos todavía. Añádelos o utiliza el ejemplo de 3 × 6 minutos.</div>'}
+ <div class="borderline"></div><h3>Tiempo por zonas cardíacas</h3><div class="grid3">${zones}</div>`;
 }
 function renderSwim(){const c=draft.cardio||{},pool=nz(draft.poolLength)||25,drills=draft.drills||[];
  const planSum=drills.reduce((n,x)=>n+nz(x.distancePlan),0),actualSum=drills.reduce((n,x)=>n+nz(x.distanceActual),0);
- return `<div class="inline-note"><b>🏊 Los datos de piscina son totalmente opcionales.</b> Puedes pulsar "Marcar como hecha" sin escribir metros ni tiempos. Si Polar importa la sesión después, añadirá lo que haya registrado sin borrar los ejercicios del profesor. En una piscina de ${fmtN(pool,0)} m, 6 largos son ${fmtN(pool*6,0)} m.</div>
+ const importedInfo=draft.polarSourceId?num(c.distance)>0?`<div class="inline-note"><b>Polar: ${fmtN(c.distance,0)} m</b> importados (${draft.polarDistanceSource==='tcx_laps'?'suma de vueltas TCX':'distancia de la sesión'}). Los bloques de técnica no se pueden reconstruir automáticamente.</div>`:`<div class="inline-note">Polar reconoció la natación, pero no proporcionó la distancia. Comprueba en Polar Flow el perfil «Natación en piscina» y la longitud de 25 m, e importa de nuevo. Puedes registrar metros manualmente.</div>`:'';
+ return `${importedInfo}<div class="inline-note"><b>🏊 Registra cada ejercicio del profesor con su estilo (crol, espalda, braza…), técnica y material (pull, aletas, palas, tabla…). Los datos son totalmente opcionales.</b> Puedes pulsar "Marcar como hecha" sin escribir metros ni tiempos. Si Polar importa la sesión después, añadirá lo que haya registrado sin borrar los ejercicios del profesor. En una piscina de ${fmtN(pool,0)} m, 6 largos son ${fmtN(pool*6,0)} m.</div>
  <div class="grid3" style="margin-top:14px">${field('Longitud de piscina (m)','poolLength',draft.poolLength??25,'number','min="1" step="1"')}${field('Profesor / clase / grupo','teacher',draft.teacher||'','text','placeholder="Clase dirigida"')}${field('Distancia prevista total (m)','cardio.plannedDistance',c.plannedDistance,'number','min="0" step="25"')}${field('Distancia real total (m)','cardio.distance',c.distance,'number','min="0" step="25"')}${field('Tiempo total (mm:ss)','cardio.duration',c.duration,'text','placeholder="35:00"')}${field('FC media (opcional)','cardio.avgHr',c.avgHr,'number','min="0" max="240"')}</div>
  <div class="borderline"></div><div class="sectionhead"><h3>Ejercicios indicados por el profesor</h3><div class="row"><button type="button" class="small" data-action="pool-example">Plantilla de clase</button><button type="button" class="soft small" data-action="add-drill">＋ Ejercicio</button></div></div>
  <div class="row" style="margin-bottom:12px"><span class="chip">Plan por ejercicios: <b>${fmtN(planSum,0)} m</b></span><span class="chip good">Real por ejercicios: <b>${fmtN(actualSum,0)} m</b></span></div>
  ${drills.length?drills.map((d,i)=>`<div class="exercise ${swimDrillDone(d)?'exercise-completed':''}"><div class="row space" style="margin-bottom:10px"><b>Bloque ${i+1}</b><div class="row"><label class="exercise-done"><input type="checkbox" data-path="drills.${i}.completed" ${swimDrillDone(d)?'checked':''}> ${swimDrillDone(d)?'✓ Hecho':'Marcar hecho'}</label><button class="small danger" type="button" data-action="remove-drill" data-i="${i}">Eliminar</button></div></div>
- ${field('Ejercicio / técnica indicada','drills.'+i+'.name',d.name,'text','placeholder="6 largos con pull buoy"')}
- <div class="grid3" style="margin:11px 0">${field('Distancia prevista (m)','drills.'+i+'.distancePlan',d.distancePlan,'number','min="0" step="25"')}${field('Distancia hecha (m)','drills.'+i+'.distanceActual',d.distanceActual,'number','min="0" step="25"')}${field('Tiempo (mm:ss, opcional)','drills.'+i+'.time',d.time,'text','placeholder="2:05"')}</div>
+ ${field('Nombre / instrucciones del profesor (opcional)',`drills.${i}.name`,d.name,'text','placeholder="6 largos suaves, énfasis en la técnica"')}
+ <div class="grid3" style="margin-top:10px">${selectField('Estilo',`drills.${i}.style`,d.style||'',SWIM_STYLES)}${selectField('Trabajo',`drills.${i}.focus`,d.focus||'',SWIM_FOCUS)}${field('Descanso (s, opcional)',`drills.${i}.restSec`,d.restSec,'number','min="0" step="5"')}</div>
+ <div class="formfield"><label>Material utilizado (puedes seleccionar varios)</label><div class="drill-equipment">${SWIM_MATERIALS.map(([key,label])=>`<label><input type="checkbox" data-path="drills.${i}.materials.${key}" ${d.materials?.[key]?'checked':''}> ${label}</label>`).join('')}</div><div class="help">Si no marcas ninguno, el ejercicio será sin material.</div></div>
+ <div class="grid4" style="margin:9px 0">${field('Largos previstos',`drills.${i}.lapsPlan`,d.lapsPlan,'number','min="0" step="1"')}${field('Largos realizados',`drills.${i}.lapsActual`,d.lapsActual,'number','min="0" step="1"')}${field('Distancia prevista (m)',`drills.${i}.distancePlan`,d.distancePlan,'number','min="0" step="1"')}${field('Distancia hecha (m)',`drills.${i}.distanceActual`,d.distanceActual,'number','min="0" step="1"')}</div>
+ <p class="help">Al introducir largos se calcula la distancia usando los ${fmtN(pool,0)} m de la piscina. Los metros también se pueden editar directamente.</p>
+ <div class="grid2" style="margin:11px 0">${field('Tiempo (mm:ss, opcional)',`drills.${i}.time`,d.time,'text','placeholder="2:05"')}<div class="formfield"><label>Descripción del bloque</label><div class="inline-note">${esc(swimDrillLabel(d))}</div></div></div>
  <p class="help">${d.distancePlan?`${fmtN(nz(d.distancePlan)/pool,1)} largos previstos · `:''}${d.distanceActual?`${fmtN(nz(d.distanceActual)/pool,1)} largos completados`:''}</p>
  ${area('Observaciones del profesor / sensaciones','drills.'+i+'.notes',d.notes,2)}</div>`).join(''):'<div class="emptystate">Todavía no hay ejercicios de piscina. Pulsa «＋ Ejercicio» o «Plantilla de clase».</div>'}
  <div class="row" style="margin-top:11px"><button class="soft" data-action="add-drill" type="button">＋ Añadir otro ejercicio</button><button data-action="sum-pool" type="button">Sumar los metros realizados</button></div><p class="footnote">Los metros anotados en ejercicios se contabilizan automáticamente en las estadísticas si has registrado distancias reales. Si no hay ejercicios completados, se usa la distancia total real que indiques arriba.</p>`;
@@ -943,7 +1081,7 @@ function renderWorkoutModal(){
  const body=`<div class="dialogheader"><div><div class="meta">Mi diario de entrenamiento</div><div class="dialogtitle">${typeIcon(draft.type)} ${esc(draft.title)}</div></div><button class="small icononly" data-action="close-modal" type="button" aria-label="Cerrar">✕</button></div>
  <div class="dialogbody"><div class="row" style="margin:0 0 14px"><span class="taskflag ${sessionState(draft).code}">${sessionState(draft).label}</span>${draft.polarSourceId?'<span class="taskflag done">Datos Polar Flow</span>':''}</div><div class="grid3">${field('Fecha','date',draft.date,'date')}${selectField('Actividad','type',draft.type,[['gym','🏋 Gimnasio'],['run','🏃 Carrera'],['swim','🏊 Piscina'],['walk','🚶 Caminata'],['padel','🎾 Pádel'],['test','🎯 Test físico'],['other','🌿 Descanso / otra']])}${field('Título de la sesión','title',draft.title,'text')}</div>
  <div style="margin:10px 0 17px" class="row space"><span class="chip">${esc(mesoByDate(draft.date)?.title||'Fuera de mesociclo')}</span><span class="meta">Puedes crear varias sesiones en el mismo día</span></div>
- ${content}<div class="borderline"></div><div class="grid3">${selectField('Estado físico previo','wellbeing',draft.wellbeing||'Óptimo',[['Óptimo','Óptimo'],['Fatiga leve','Fatiga leve'],['Sobrecarga','Sobrecarga'],['Molestias','Molestias / dolor']])}${field('Esfuerzo percibido (1–10)','effort',draft.effort,'number','min="1" max="10" step="1"')}<div class="formfield"><label>Estado de la sesión</label><label class="checkline"><input type="checkbox" data-path="done" ${draft.done?'checked':''}> Entrenamiento realizado</label></div></div>
+ ${content}<div class="borderline"></div><div class="grid3">${selectField('Estado físico previo','wellbeing',draft.wellbeing||'Óptimo',[['Óptimo','Óptimo'],['Fatiga leve','Fatiga leve'],['Sobrecarga','Sobrecarga'],['Molestias','Molestias / dolor']])}${draft.type==='run'?'<div class="help">El RPE se registra arriba, junto al calentamiento.</div>':field('Esfuerzo percibido (1–10)','effort',draft.effort,'number','min="1" max="10" step="1"')}<div class="formfield"><label>Estado de la sesión</label><label class="checkline"><input type="checkbox" data-path="done" ${draft.done?'checked':''}> Entrenamiento realizado</label></div></div>
  ${area('Notas generales / sensaciones / molestias','note',draft.note,3)}</div>
  <div class="dialogfoot"><div class="row"><button type="button" class="small danger" data-action="delete-workout">Eliminar sesión</button><button type="button" class="small" data-action="close-modal">Cancelar</button></div><div class="row"><button type="button" data-action="save-workout">${draft.type==='gym'?'Guardar progreso':'Guardar cambios'}</button><button type="button" class="primary" data-action="finish-workout">${draft.done?'✓ Guardar realizada':draft.type==='swim'?'✓ Marcar piscina hecha':draft.type==='gym'?'✓ Finalizar gimnasio':'✓ Marcar realizada'}</button></div></div>`;
  openModal(body,'workout',true);const next=$('modalContent').querySelector('.dialogbody');if(next)next.scrollTop=sy;
@@ -959,6 +1097,13 @@ function handleFormChange(el){
   let iv=intervalMatch?draft.intervals?.[Number(intervalMatch[1])]:null;
   const priorAuto=iv?autoRestEnabled(iv):false;
   setNested(draft,path,value);
+  const lapMatch=path.match(/^drills\.(\d+)\.laps(Plan|Actual)$/);
+  if(lapMatch){
+   const d=draft.drills?.[Number(lapMatch[1])];
+   const target=lapMatch[2]==='Plan'?'distancePlan':'distanceActual';
+   if(d){d[target]=num(value)===null?null:Math.round(num(value)*(nz(draft.poolLength)||25)*100)/100;
+    const targetField=$('modalContent')?.querySelector(`[data-path="drills.${lapMatch[1]}.${target}"]`);if(targetField)targetField.value=d[target]??'';}
+  }
   if(iv){
    const prop=intervalMatch[2],idx=Number(intervalMatch[1]);
    if(prop==='restSec'){iv.restAuto=false;
@@ -970,11 +1115,13 @@ function handleFormChange(el){
    }
    if(prop==='restAuto'){renderWorkoutModal();return;}
   }
+  if(/^intervals\.\d+\.plannedTime$/.test(path)&&runIntervalMode(draft)==='time'){const j=Number(path.split('.')[1]),secs=parseTime(value);if(secs>0)draft.intervals[j].plannedDurationSec=secs;}
   if(el.type==='checkbox'&&/^(exercises|drills)\.\d+\.completed$/.test(path)){renderWorkoutModal();return;}
  }else if(modalMode==='meso'){setNested(editingMeso,path,value)}else if(modalMode==='polar'){setNested(editingPolar,path,value)}else if(modalMode==='body'){setNested(editingBody,path,value)}
 }
 function ensureValid(w){if(!/^\d{4}-\d{2}-\d{2}$/.test(w.date)||!Number.isFinite(asDate(w.date).getTime()))return 'Fecha no válida';
  if(w.type==='gym'){for(const e of w.exercises||[]){if(!e.name?.trim())return 'Cada ejercicio de gimnasio necesita nombre.';for(const s of e.sets||[])for(const k of ['plannedKg','plannedReps','actualKg','actualReps','rir'])if(s[k]!=null&&s[k]<0)return 'No se permiten pesos o repeticiones negativos.';}}
+ if(w.type==='run'){if(num(w.muscleDiscomfort)!==null&&(w.muscleDiscomfort<0||w.muscleDiscomfort>10))return 'Molestias: introduce un valor de 0 a 10.';for(const it of w.intervals||[]){if(intervalTimed(it)){if(parseTime(it.plannedTime)<=0||!paceSeconds(it.targetPaceFast)||!paceSeconds(it.targetPaceSlow)||paceSeconds(it.targetPaceFast)>paceSeconds(it.targetPaceSlow))return 'Revisa la duración y el rango de ritmos del bloque.';}for(const k of ['avgHr','maxHr','recoveryEndHr']){const v=num(it[k]);if(v!==null&&(v<0||v>240))return 'Las pulsaciones por serie deben estar entre 0 y 240.';}if(num(it.rpe)!==null&&(it.rpe<1||it.rpe>10))return 'RPE por serie: 1 a 10.';}}
  if(w.type==='swim'){for(const d of w.drills||[]){if(nz(d.distanceActual)<0||nz(d.distancePlan)<0)return 'La distancia de piscina no puede ser negativa.';}}
  return null;}
 function saveWorkout(completed){
@@ -1028,7 +1175,7 @@ function saveBlob(name,mime,data){const blob=new Blob([data],{type:mime});const 
 function csv(rows){const escapeCell=x=>{let s=String(x??'');if(/^[\s]*[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"'};return '\ufeff'+rows.map(r=>r.map(escapeCell).join(';')).join('\r\n');}
 function exportCsv(){let out=[['Fecha','Mesociclo','Actividad','Sesión','Realizada','Distancia real','Unidad','Duración','Esfuerzo','Estado','Notas']];db.workouts.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(w=>{let m=db.mesocycles.find(x=>x.id===w.mesoId);out.push([w.date,m?.title||'',typeLabel(w.type),w.title,w.done?'Sí':'No',['run','walk'].includes(w.type)?w.cardio?.distance:w.type==='swim'?swimMeters(w):'',['run','walk'].includes(w.type)?'km':w.type==='swim'?'m':'',w.cardio?.duration||'',w.effort||'',w.wellbeing||'',w.note||'']);});saveBlob('EntrenaSUB9_resumen.csv','text/csv;charset=utf-8',csv(out));}
 function exportSetsCsv(){let r=[['Fecha','Actividad','Sesión','Ejercicio','Serie / bloque','Plan kg','Plan rep/s','Real kg','Real rep/s','RIR','Distancia prevista m','Distancia real m','Tiempo']];db.workouts.forEach(w=>{if(w.type==='gym')(w.exercises||[]).forEach(e=>(e.sets||[]).forEach((s,i)=>r.push([w.date,'Gimnasio',w.title,e.name,i+1,s.plannedKg,s.plannedReps,s.actualKg,s.actualReps,s.rir,'','',''])));
- if(w.type==='swim')(w.drills||[]).forEach((d,i)=>r.push([w.date,'Piscina',w.title,d.name,i+1,'','','','','',d.distancePlan,d.distanceActual,d.time]));
+ if(w.type==='swim')(w.drills||[]).forEach((d,i)=>r.push([w.date,'Piscina',w.title,swimDrillLabel(d),i+1,'','','','','',d.distancePlan,d.distanceActual,d.time]));
  if(w.type==='run')(w.intervals||[]).forEach((s,i)=>r.push([w.date,'Carrera',w.title,'Serie',i+1,'','','','','',s.distance,s.distance,s.actualTime]));});saveBlob('EntrenaSUB9_series_y_piscina.csv','text/csv;charset=utf-8',csv(r));}
 function exportPolarCsv(){const headers=['Fecha','Carga','Esfuerzo','Tolerancia','Relación E/T','FC nocturna mínima manual','FC mínima de medias 5 min (≈)','VFC HRV ms','Horas sueño','Puntuación sueño','Peso kg','Z1 min','Z2 min','Z3 min','Z4 min','Z5 min','Z6 min','Observaciones'];let rows=[headers];(db.polar||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>rows.push([p.date,p.load,p.effort,p.tolerance,polarRatio(p)??'',p.nightHr,p.nightHr5min,p.hrv,p.sleepHours,p.sleepScore,p.bodyWeight,...['Z1','Z2','Z3','Z4','Z5','Z6'].map(z=>p.zoneMins?.[z]),p.notes]));saveBlob('EntrenaSUB9_Polar_'+today()+'.csv','text/csv;charset=utf-8',csv(rows));}
 async function importJson(file){if(!file)return;try{let x=JSON.parse(await file.text());if(!Array.isArray(x.mesocycles)||!Array.isArray(x.workouts)||x.mesocycles.length>100||x.workouts.length>20000)throw new Error('Estructura o tamaño no válido');if(!x.mesocycles.every(m=>typeof m.id==='string'&&typeof m.start==='string'&&typeof m.end==='string')||!x.workouts.every(w=>typeof w.date==='string'&&['gym','run','swim','walk','padel','other','test'].includes(w.type)))throw new Error('Estructura de datos incompleta');if(!confirm('¿Sustituir toda la información actual con la copia seleccionada? SI ESTÁS CONECTADO A LA NUBE, estas sustituciones y eliminaciones se sincronizarán en otros dispositivos. Exporta primero una copia JSON.'))return;
@@ -1298,24 +1445,36 @@ async function polarCallback(){
  finally{polarRemote.busy=false;render();}
 }
 function applyPolarLaps(w,laps){
- // Se completan repeticiones solo cuando hay exactamente una vuelta compatible
- // por cada distancia prevista. No se inventan parciales a partir del promedio total.
  let intervals=w.intervals||[];if(!intervals.length||!Array.isArray(laps)||laps.length<intervals.length)return 0;
- let matching=laps.filter(l=>num(l.distanceMeters)>0&&num(l.durationSec)>0&&intervals.some(s=>{
-  const planned=num(s.distance);return planned>0&&Math.abs(planned-l.distanceMeters)<=Math.max(12,planned*0.07);
+ const values=laps.map((lap,index)=>({lap,index})).filter(({lap})=>num(lap.distanceMeters)>0&&num(lap.durationSec)>0);
+ // Emparejar una vuelta por intervalo. Si hay ambigüedad, conservar los datos manuales.
+ const candidateLists=intervals.map(it=>values.filter(({lap})=>{
+  if(intervalTimed(it)){
+   const target=parseTime(it.plannedTime)||num(it.plannedDurationSec);
+   if(!(target>0)||Math.abs(lap.durationSec-target)>Math.max(12,target*.06))return false;
+   const secsPerKm=lap.durationSec*1000/lap.distanceMeters,lo=paceSeconds(it.targetPaceFast),hi=paceSeconds(it.targetPaceSlow);
+   return lo&&hi&&secsPerKm>=lo*.94&&secsPerKm<=hi*1.06;
+  }
+  const d=num(it.distance);return d>0&&Math.abs(d-lap.distanceMeters)<=Math.max(12,d*.07);
  }));
- if(matching.length!==intervals.length)return 0;
- let used=new Set(),matched=[];
- for(let s of intervals){let i=matching.findIndex((l,ix)=>!used.has(ix)&&Math.abs(l.distanceMeters-s.distance)<=Math.max(12,s.distance*0.07));
-  if(i<0)return 0;used.add(i);matched.push(matching[i]);
+ if(candidateLists.some(a=>a.length<1))return 0;
+ const assignment=[];const used=new Set();let solutions=0,solution=null;
+ function choose(i){if(solutions>1)return;if(i>=candidateLists.length){solutions++;solution=assignment.slice();return;}
+  for(const option of candidateLists[i]){if(used.has(option.index))continue;
+   if(i>0&&option.index<=assignment[i-1].index)continue;used.add(option.index);assignment.push(option);choose(i+1);assignment.pop();used.delete(option.index);if(solutions>1)return;}
  }
- let changed=0;intervals.forEach((s,i)=>{
-  if(parseTime(s.actualTime)>0)return;
-  s.actualTime=timeFmt(matched[i].durationSec);s.actualDistance=Math.round(matched[i].distanceMeters*10)/10;s.polarLap=true;changed++;
+ choose(0);if(solutions!==1||!solution)return 0;
+ let changed=0;
+ intervals.forEach((it,i)=>{const {lap,index}=solution[i];if(!parseTime(it.actualTime)){it.actualTime=timeFmt(lap.durationSec);it.actualDistance=Math.round(lap.distanceMeters*10)/10;it.polarLap=true;changed++;}
+  if(num(it.avgHr)==null&&num(lap.avgHr)!=null){it.avgHr=lap.avgHr;changed++;}
+  if(num(it.maxHr)==null&&num(lap.maxHr)!=null){it.maxHr=lap.maxHr;changed++;}
+  // El pulso final de una recuperación solo se utiliza si Polar registra
+  // explícitamente una vuelta posterior compatible con el descanso previsto.
+  const next=laps[index+1];const rest=num(it.restSec);if(num(it.recoveryEndHr)==null&&next&&rest>0&&num(next.endHr)>0&&num(next.durationSec)>0&&
+   Math.abs(next.durationSec-rest)<=Math.max(20,rest*.3)&&num(next.distanceMeters)<lap.distanceMeters*.75){it.recoveryEndHr=next.endHr;changed++;}
  });
  return changed;
 }
-
 function polarMerge(data){
  const summary={newDaily:0,updatedDaily:0,newWorkouts:0,filledPlanned:0,existingWorkouts:0};
  let changed=false;
@@ -1346,8 +1505,14 @@ function polarMerge(data){
   if(!p.sourceId||!/^\d{4}-\d\d-\d\d$/.test(p.date))continue;
   let existing=db.workouts.find(w=>w.polarSourceId===p.sourceId);
   if(existing){
-   if(p.kind==='run'&&Array.isArray(p.laps)&&p.laps.length&&JSON.stringify(existing.polarLaps||[])!==JSON.stringify(p.laps)){
-    existing.polarLaps=clone(p.laps);applyPolarLaps(existing,p.laps);changed=true;
+   if(p.kind==='run'&&Array.isArray(p.laps)&&p.laps.length){
+    if(JSON.stringify(existing.polarLaps||[])!==JSON.stringify(p.laps)){existing.polarLaps=clone(p.laps);changed=true;}
+    if(applyPolarLaps(existing,p.laps)>0)changed=true;
+   }
+   // Corregir el caso de una natación ya importada sin distancia: Polar puede
+   // completar los metros más tarde. No sobreescribir datos manuales positivos.
+   if(p.kind==='swim'&&num(p.distanceMeters)>0&&!(num(existing.cardio?.distance)>0)){
+    existing.cardio??={};existing.cardio.distance=Math.round(p.distanceMeters);existing.polarDistanceSource=p.distanceSource||'polar';changed=true;
    }
    summary.existingWorkouts++;continue;
   }
@@ -1378,7 +1543,7 @@ function polarMerge(data){
   w.done=true;w.doneSource='polar';w.completedAt=w.completedAt||new Date().toISOString();
   w.cardio=w.cardio||{};
   if(p.durationSec>0){let seconds=Math.round(p.durationSec);w.cardio.duration=seconds>=3600?`${Math.floor(seconds/3600)}:${String(Math.floor(seconds%3600/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`:`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;}
-  if(p.distanceMeters>0)w.cardio.distance=t==='swim'?Math.round(p.distanceMeters):Math.round(p.distanceMeters/1000*1000)/1000;
+  if(p.distanceMeters>0){w.cardio.distance=t==='swim'?Math.round(p.distanceMeters):Math.round(p.distanceMeters/1000*1000)/1000;if(t==='swim')w.polarDistanceSource=p.distanceSource||'polar';}
   if(p.avgHr!=null)w.cardio.avgHr=p.avgHr;
   if(p.maxHr!=null)w.cardio.maxHr=p.maxHr;
   if(p.calories!=null)w.cardio.calories=p.calories;
@@ -1432,6 +1597,7 @@ document.addEventListener('input',e=>{const el=e.target;if(el.matches('#modalCon
 document.addEventListener('change',e=>{
  const el=e.target;
  if(el.matches('#modalContent [data-path]'))handleFormChange(el);
+ if(el.matches('#modalContent [data-gym-select]')){chooseGymExercise(Number(el.dataset.gymSelect),el.value);return;}
  if(el.id==='calendarMeso'){selectedMeso=el.value;selectedWeek=0;render()}
  if(el.id==='weekPlanMeso'){selectedMeso=el.value;editingWeekPlan=null;editingWeekPlanMesoId=null;render()}
  if(el.id==='weekCaptureSelect'){captureWeekIndex=Number(el.value)||0}
@@ -1487,17 +1653,28 @@ document.addEventListener('click',e=>{
  case 'save-workout':saveWorkout(false);break;
  case 'finish-workout':saveWorkout(true);break;
  case 'delete-workout':if(draft&&confirm('¿Eliminar esta sesión y sus marcas? Esta acción no se puede deshacer.')){db.workouts=db.workouts.filter(w=>w.id!==draft.id);persist();closeModal();render();toast('Sesión eliminada.')}break;
- case 'add-exercise':if(!draft)return;draft.exercises.push(newExercise('Nuevo ejercicio'));renderWorkoutModal();break;
+ case 'add-exercise':if(!draft)return;{const ex=newExercise('Nuevo ejercicio');ex.name='';ex.customName=true;draft.exercises.push(ex);renderWorkoutModal();}break;
+ case 'use-last-gym':applyLastGymLoad(i);break;
  case 'remove-exercise':if(draft&&confirm('¿Quitar este ejercicio con todas sus series?')){draft.exercises.splice(i,1);renderWorkoutModal();}break;
  case 'add-set':if(!draft?.exercises?.[i])return;{let ex=draft.exercises[i],p=ex.sets[ex.sets.length-1]||{};ex.sets.push({plannedKg:p.plannedKg??null,plannedReps:p.plannedReps??null,actualKg:null,actualReps:null,rir:null});renderWorkoutModal();}break;
  case 'remove-set':if(draft?.exercises?.[i]?.sets?.length>1){draft.exercises[i].sets.splice(j,1);renderWorkoutModal()}else toast('Un ejercicio debe tener al menos una serie.',true);break;
  case 'copy-gym-ex':if(draft?.exercises?.[i]){const ex=draft.exercises[i];ex.sets.forEach(st=>{if(!isTimedGymExercise(ex))st.actualKg=st.plannedKg;st.actualReps=st.plannedReps});renderWorkoutModal();}break;
  case 'copy-gym-all':if(draft?.type==='gym'){draft.exercises.forEach(ex=>ex.sets.forEach(st=>{if(!isTimedGymExercise(ex))st.actualKg=st.plannedKg;st.actualReps=st.plannedReps}));renderWorkoutModal();}break;
- case 'add-interval':if(draft){draft.intervals.push({id:id(),distance:400,plannedTime:'',actualTime:'',actualDistance:null,restAuto:true,restSec:recommendedRestSec(400)});renderWorkoutModal()}break;
+ case 'add-interval':if(draft){draft.intervals??=[];draft.intervals.push(makeRunInterval(runIntervalMode(draft)));renderWorkoutModal()}break;
+ case 'run-mode-time':if(draft){if(draft.intervals?.some(x=>parseTime(x.actualTime)>0||num(x.actualDistance)>0)&&!confirm('Hay resultados reales. ¿Cambiar el tipo de series? No se borrarán, pero revisa los objetivos.'))break;draft.intervalMode='time';draft.intervals=(draft.intervals||[]).map(x=>({...x,mode:'time',distance:null,plannedTime:'6:00',plannedDurationSec:360,targetPaceFast:'5:25',targetPaceSlow:'5:40',restAuto:false}));renderWorkoutModal()}break;
+ case 'run-mode-distance':if(draft){if(draft.intervals?.some(x=>parseTime(x.actualTime)>0||num(x.actualDistance)>0)&&!confirm('Hay resultados reales. ¿Cambiar a series por metros?'))break;draft.intervalMode='distance';draft.intervals=(draft.intervals||[]).map(x=>({...x,mode:'distance',distance:num(x.distance)||400,plannedTime:'',restAuto:true,restSec:recommendedRestSec(num(x.distance)||400)}));renderWorkoutModal()}break;
+ case 'run-3x6-example':if(draft){if(draft.intervals?.length&&!confirm('¿Sustituir las series actuales por tres bloques de 6 minutos?'))break;draft.intervalMode='time';draft.intervals=Array.from({length:3},()=>makeRunInterval('time'));renderWorkoutModal()}break;
  case 'remove-interval':if(draft){draft.intervals.splice(i,1);renderWorkoutModal()}break;
  case 'add-drill':if(draft){draft.drills??=[];draft.drills.push(newDrill('',null));renderWorkoutModal()}break;
  case 'remove-drill':if(draft){draft.drills.splice(i,1);renderWorkoutModal()}break;
- case 'pool-example':if(draft){if(draft.drills?.length&&!confirm('¿Añadir los bloques de ejemplo a los que ya tienes?'))return;const p=nz(draft.poolLength)||25;draft.drills??=[];[['Calentamiento · 6 largos',6],['Técnica pull buoy / patada · 6 largos',6],['Solo piernas · 4 largos',4],['Series rápidas · 6 largos',6],['Nado libre · 4 largos',4],['Continuo · 4 largos',4]].forEach(([name,laps])=>draft.drills.push(newDrill(name,laps*p)));renderWorkoutModal();}break;
+ case 'pool-example':if(draft){if(draft.drills?.length&&!confirm('¿Añadir los bloques de ejemplo a los que ya tienes?'))return;const p=nz(draft.poolLength)||25;draft.drills??=[];[
+ ['Calentamiento',6,'crol','calentamiento',{}],
+ ['Técnica de brazos',6,'crol','brazos',{pull:true}],
+ ['Piernas',4,'crol','piernas',{tabla:true}],
+ ['Series rápidas',6,'crol','velocidad',{}],
+ ['Nado suave',4,'espalda','completo',{}],
+ ['Continuo',4,'braza','continuo',{}]
+ ].forEach(([name,laps,style,focus,materials])=>{const d=newDrill(name,laps*p);Object.assign(d,{style,focus,materials,lapsPlan:laps});draft.drills.push(d)});renderWorkoutModal();}break;
  case 'sum-pool':if(draft){let actual=(draft.drills||[]).reduce((a,d)=>a+nz(d.distanceActual),0),plan=(draft.drills||[]).reduce((a,d)=>a+nz(d.distancePlan),0);if(actual<=0){toast('Primero introduce la distancia real de algún ejercicio.',true);return;}draft.cardio.distance=actual;if(plan>0)draft.cardio.plannedDistance=plan;renderWorkoutModal();toast('Distancias sumadas.');}break;
  case 'edit-meso':openMesoEditor(md());break;
  case 'add-meso':case 'new-meso':openMesoEditor(null);break;
